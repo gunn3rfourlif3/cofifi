@@ -28,7 +28,9 @@ param(
     [string] $DbName     = 'cofifi',
     [string] $DbUser     = 'root',
     [string] $DbPass     = '',
-    [string] $DbHost     = 'localhost',
+    # Left blank on purpose — read from XAMPP's my.ini below, because XAMPP is
+    # often moved off 3306 to avoid clashing with another MySQL.
+    [string] $DbHost     = '',
     [string] $DbPrefix   = 'cof_',
 
     [string] $AdminUser  = 'cofifi',
@@ -50,7 +52,7 @@ function Warn   ($m) { Write-Host "  ! $m" -ForegroundColor Yellow }
 function Fail   ($m) { Write-Host "  ✗ $m" -ForegroundColor Red; exit 1 }
 
 Write-Host ''
-Write-Host '  Cofifi — local install' -ForegroundColor White
+Write-Host '  Cofifi - local install' -ForegroundColor White
 Write-Host '  ----------------------' -ForegroundColor DarkGray
 
 # ---------------------------------------------------------------------------
@@ -69,9 +71,33 @@ if (-not (Test-Path $Php)) {
     if ($cmd) { $Php = $cmd.Source } else { Fail "PHP not found. Looked in $Php and on PATH. Set -XamppPath." }
 }
 
+# WP-CLI's `db` commands shell out to mysql / mysqladmin / mysqlcheck. XAMPP
+# does not put those on PATH, so add them for this process only.
+$MysqlBin = Join-Path $XamppPath 'mysql\bin'
+if (Test-Path $MysqlBin) { $env:PATH = "$MysqlBin;$env:PATH" }
+
+# XAMPP's MySQL is frequently on a non-default port. Read it rather than
+# assuming 3306 — connecting to the wrong port is the most common failure here.
+if (-not $DbHost) {
+    $DbHost = 'localhost'
+    $MyIni  = Join-Path $XamppPath 'mysql\bin\my.ini'
+    if (Test-Path $MyIni) {
+        $inMysqld = $false
+        foreach ($line in Get-Content $MyIni) {
+            $t = $line.Trim()
+            if ($t -match '^\[(.+)\]$') { $inMysqld = ($Matches[1] -eq 'mysqld'); continue }
+            if ($inMysqld -and $t -match '^port\s*=\s*(\d+)') {
+                if ($Matches[1] -ne '3306') { $DbHost = "localhost:$($Matches[1])" }
+                break
+            }
+        }
+    }
+}
+
 Ok "PHP        $Php"
 Ok "Root       $Root"
 Ok "Theme      $ThemeDir"
+Ok "DB host    $DbHost"
 
 if (-not (Test-Path (Join-Path $ThemeDir 'style.css'))) {
     Fail "The theme is not where this script expects it. Run this from wp-content/themes/cofifi/setup."
@@ -115,10 +141,20 @@ function Wp {
     if ($LASTEXITCODE -ne 0) { Fail "wp $($Args -join ' ') failed (exit $LASTEXITCODE)" }
 }
 
+# Probe form: never throws, just reports the exit code. Used for "is this
+# already done?" checks, where a non-zero exit is an expected answer.
 function WpQuiet {
     param([Parameter(ValueFromRemainingArguments = $true)] $Args)
-    & $Php $WpPhar --path="$Root" @Args 2>&1 | Out-Null
-    return $LASTEXITCODE
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $Php $WpPhar --path="$Root" @Args 2>&1 | Out-Null
+        return $LASTEXITCODE
+    } catch {
+        return 1
+    } finally {
+        $ErrorActionPreference = $previous
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -127,13 +163,43 @@ function WpQuiet {
 
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
+# Windows sets the read-only attribute on folders for reasons unrelated to
+# permissions, and PHP's is_writable() then reports the directory as unwritable.
+# WP-CLI refuses to work in that state. Clear it before anything else.
+& attrib.exe -R "$Root" /D 2>$null | Out-Null
+
 if (Test-Path (Join-Path $Root 'wp-settings.php')) {
     Skip 'WordPress core already downloaded'
 } elseif ($SkipDownload) {
     Fail 'WordPress core is missing and -SkipDownload was passed.'
 } else {
+    # Fetched and extracted directly rather than via `wp core download`, which
+    # trips over the same is_writable() check on Windows even once the attribute
+    # is cleared. Copy-Item merges into the existing wp-content, so the theme
+    # already sitting in wp-content/themes/cofifi survives untouched.
     Step 'Downloading WordPress'
-    Wp core download --locale=en_GB
+    $zip = Join-Path $env:TEMP 'wordpress-latest.zip'
+    $tmp = Join-Path $env:TEMP ('wp-' + [guid]::NewGuid().ToString('N'))
+
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri 'https://en-gb.wordpress.org/latest-en_GB.zip' -OutFile $zip -UseBasicParsing
+    } catch {
+        try {
+            Invoke-WebRequest -Uri 'https://wordpress.org/latest.zip' -OutFile $zip -UseBasicParsing
+        } catch {
+            Fail "Could not download WordPress: $($_.Exception.Message)"
+        }
+    }
+
+    Expand-Archive -Path $zip -DestinationPath $tmp -Force
+    Copy-Item -Path (Join-Path $tmp 'wordpress\*') -Destination $Root -Recurse -Force
+    Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $zip -Force -ErrorAction SilentlyContinue
+
+    if (-not (Test-Path (Join-Path $Root 'wp-settings.php'))) {
+        Fail 'WordPress extracted but wp-settings.php is missing.'
+    }
     Ok 'WordPress downloaded'
 }
 
