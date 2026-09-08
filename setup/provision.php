@@ -441,7 +441,59 @@ if ( $has_woo && ! $skip_products ) {
 }
 
 /* -------------------------------------------------------------------------
- * 7. Finish
+ * 7. .htaccess
+ *
+ * WordPress writes this itself in the browser, but not under WP-CLI:
+ * got_mod_rewrite() checks $is_apache, which is false when there is no
+ * SERVER_SOFTWARE, so `wp rewrite flush` just warns and moves on. Without the
+ * file, pretty permalinks 404 on everything except the homepage — the site
+ * looks installed and is not. So write it here.
+ * ---------------------------------------------------------------------- */
+
+$htaccess = untrailingslashit( ABSPATH ) . '/.htaccess';
+$base     = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+$base     = $base ? trailingslashit( $base ) : '/';
+
+$rules = array(
+	'<IfModule mod_rewrite.c>',
+	'RewriteEngine On',
+	'RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]',
+	'RewriteBase ' . $base,
+	'RewriteRule ^index\.php$ - [L]',
+	'RewriteCond %{REQUEST_FILENAME} !-f',
+	'RewriteCond %{REQUEST_FILENAME} !-d',
+	'RewriteRule . ' . $base . 'index.php [L]',
+	'</IfModule>',
+);
+
+require_once ABSPATH . 'wp-admin/includes/misc.php';
+
+if ( ! file_exists( $htaccess ) ) {
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch
+	@touch( $htaccess );
+}
+
+$written = false;
+
+if ( file_exists( $htaccess ) ) {
+	$written = insert_with_markers( $htaccess, 'WordPress', $rules );
+}
+
+if ( ! $written ) {
+	// insert_with_markers leans on is_writable(), which misreports on Windows.
+	$block = "# BEGIN WordPress\n" . implode( "\n", $rules ) . "\n# END WordPress\n";
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	$written = (bool) @file_put_contents( $htaccess, $block );
+}
+
+if ( $written ) {
+	WP_CLI::log( '  .htaccess      written, RewriteBase ' . $base );
+} else {
+	WP_CLI::warning( 'Could not write .htaccess at ' . $htaccess . ' — pretty permalinks will 404 until it exists.' );
+}
+
+/* -------------------------------------------------------------------------
+ * 8. Finish
  * ---------------------------------------------------------------------- */
 
 flush_rewrite_rules( false );
