@@ -72,9 +72,21 @@ function cofifi_preload_body_font() {
 add_action( 'wp_head', 'cofifi_preload_body_font', 1 );
 
 /**
- * Drop the WooCommerce block styles we do not use — the theme styles these.
+ * Drop the WooCommerce stylesheets this theme replaces.
+ *
+ * `woocommerce-layout` is a float grid — `li.product { float: left; width:
+ * 30.75% }` and friends. This theme lays products out with CSS grid, and the
+ * two fight: each card ends up at 30% of its own grid track. `smallscreen` is
+ * the responsive half of the same float system, and the block styles are for
+ * blocks we do not render.
+ *
+ * `woocommerce-general` stays — it carries the bits that are genuinely Woo's
+ * behaviour rather than layout (variation swatches, star ratings, the password
+ * strength meter), and the theme overrides its appearance.
  */
-function cofifi_dequeue_woo_block_css() {
+function cofifi_dequeue_woo_css() {
+	wp_dequeue_style( 'woocommerce-layout' );
+	wp_dequeue_style( 'woocommerce-smallscreen' );
 	wp_dequeue_style( 'wc-blocks-style' );
 }
-add_action( 'wp_enqueue_scripts', 'cofifi_dequeue_woo_block_css', 100 );
+add_action( 'wp_enqueue_scripts', 'cofifi_dequeue_woo_css', 100 );
