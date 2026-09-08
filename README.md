@@ -29,7 +29,7 @@ git clone https://github.com/gunn3rfourlif3/cofifi.git cofifi
 Locally that is:
 
 ```
-C:\xampp\htdocs\development\cofifi\wp-content\themes\cofifi\
+C:\xampp\htdocs\cofifi\wp-content\themes\cofifi\
 ```
 
 Then:

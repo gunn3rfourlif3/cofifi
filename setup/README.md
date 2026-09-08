@@ -12,6 +12,8 @@ One command takes an empty folder to a working Cofifi shop with WooCommerce, the
 | **Internet** | fetches WP-CLI, WordPress core, WooCommerce | — |
 | **This theme in place** | the script locates everything relative to itself | `wp-content/themes/cofifi/` |
 
+Put the WordPress install at **`C:\xampp\htdocs\<brand>`**, not nested inside a `development/` folder — the site URL is then `http://localhost/<brand>`, which is shorter, matches the container path in production, and keeps `RewriteBase` simple. Keep brand source assets (logos, renders, font packs) *outside* the web root.
+
 Nothing else. WP-CLI downloads itself into `setup/bin/` on first run and is gitignored.
 
 The one thing the scripts can't do is start XAMPP's services — Apache and MySQL have to be running before you begin.
@@ -35,7 +37,7 @@ Both are **idempotent** — every step checks first and skips what is already do
 ## Options
 
 ```powershell
-setup\install.ps1 -SiteUrl "http://localhost/development/cofifi" `
+setup\install.ps1 -SiteUrl "http://localhost/cofifi" `
                   -DbName cofifi -DbUser root -DbPass "" `
                   -AdminUser cofifi -AdminEmail you@example.com `
                   -SkipProducts

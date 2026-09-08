@@ -22,7 +22,7 @@ param(
     # (setup/ lives in the theme, the theme in wp-content/themes).
     [string] $Root,
 
-    [string] $SiteUrl    = 'http://localhost/development/cofifi',
+    [string] $SiteUrl    = 'http://localhost/cofifi',
     [string] $SiteTitle  = 'Cofifi',
 
     [string] $DbName     = 'cofifi',
