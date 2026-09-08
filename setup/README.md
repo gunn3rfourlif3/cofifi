@@ -12,7 +12,27 @@ One command takes an empty folder to a working Cofifi shop with WooCommerce, the
 | **Internet** | fetches WP-CLI, WordPress core, WooCommerce | — |
 | **This theme in place** | the script locates everything relative to itself | `wp-content/themes/cofifi/` |
 
-Put the WordPress install at **`C:\xampp\htdocs\<brand>`**, not nested inside a `development/` folder — the site URL is then `http://localhost/<brand>`, which is shorter, matches the container path in production, and keeps `RewriteBase` simple. Keep brand source assets (logos, renders, font packs) *outside* the web root.
+### Where it lives, and where it is served
+
+All local dev lives under **`C:\xampp\htdocs\development\<brand>`**. The site is still served at
+**`http://localhost/<brand>`** — those are two separate things, joined by an Apache alias, not by moving files.
+
+`conf\extra\httpd-<brand>.conf`:
+
+```apache
+Alias /<brand> "C:/xampp/htdocs/development/<brand>"
+
+<Directory "C:/xampp/htdocs/development/<brand>">
+    Options Indexes FollowSymLinks Includes ExecCGI
+    AllowOverride All
+    Require all granted
+</Directory>
+```
+
+included from `httpd.conf` with `Include conf/extra/httpd-<brand>.conf`, then restart Apache.
+
+`AllowOverride All` is required or `.htaccess` is ignored and pretty permalinks 404. `RewriteBase` follows the
+**URL** path (`/<brand>/`), not the disk path.
 
 Nothing else. WP-CLI downloads itself into `setup/bin/` on first run and is gitignored.
 

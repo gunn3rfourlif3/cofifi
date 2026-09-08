@@ -29,7 +29,7 @@ git clone https://github.com/gunn3rfourlif3/cofifi.git cofifi
 Locally that is:
 
 ```
-C:\xampp\htdocs\cofifi\wp-content\themes\cofifi\
+C:\xampp\htdocs\development\cofifi\wp-content\themes\cofifi\
 ```
 
 Then:
@@ -110,6 +110,8 @@ Values in **[square brackets]** are placeholders for facts nobody has confirmed 
 `assets/img/pack-hero.webp` is the hero packshot, cut out from the studio shot and relit on black.
 
 Some of the supplied product renders carry AI-garbled label text ("AFIO COFFEE & TIEATE CO.", "100% Ethiopien") — `hero-4.png`, `hero-2.png`, `hero-3.png`, `qwen-1.png` and the two-bag shot. They are used small or cropped only. Reshoot before those appear at any size where the label is readable.
+
+Served at `http://localhost/cofifi` via an Apache alias — see [setup/README.md](setup/README.md).
 
 ## Deployment
 
