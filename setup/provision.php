@@ -119,6 +119,16 @@ if ( $has_woo ) {
 	update_option( 'woocommerce_onboarding_profile', array( 'skipped' => true ) );
 	delete_transient( '_wc_activation_redirect' );
 
+	/*
+	 * Recent WooCommerce ships with "coming soon" mode ON. Left alone it hides
+	 * the entire store behind a launch page — the site looks broken and the
+	 * reason is nowhere near the symptom. Turn it off; a local dev install is
+	 * already noindexed by the check above.
+	 */
+	update_option( 'woocommerce_coming_soon', 'no' );
+	update_option( 'woocommerce_store_pages_only', 'no' );
+	WP_CLI::log( '  coming soon    off (store is live)' );
+
 	WP_CLI::log( '  woocommerce    ZAR, ZA, /shop/<slug> product URLs' );
 
 	/*
