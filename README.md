@@ -8,7 +8,18 @@ This repository is the **theme only**. WordPress core, `wp-config.php`, uploads 
 
 ## Install
 
-Clone into a WordPress install so the theme folder is named `cofifi`:
+**Automated:** with Apache and MySQL running, from the theme folder —
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup\install.ps1   # Windows / XAMPP
+```
+```bash
+./setup/install.sh                                           # Linux / container
+```
+
+That downloads WordPress and WooCommerce, creates the database, activates the theme and provisions pages, menus, categories and sample products. Idempotent — safe to re-run. See [setup/README.md](setup/README.md).
+
+**Manual**, if you would rather. Clone into a WordPress install so the theme folder is named `cofifi`:
 
 ```bash
 cd /path/to/wordpress/wp-content/themes

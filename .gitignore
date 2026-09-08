@@ -26,3 +26,7 @@ Thumbs.db
 node_modules/
 vendor/
 *.log
+
+# Install helpers
+setup/bin/
+setup/.env
