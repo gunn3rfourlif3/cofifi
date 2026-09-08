@@ -1183,7 +1183,60 @@ body.nav-open { overflow: hidden; }
 }
 .reset_variations { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dim); }
 
-.pdp__compliance { margin-top: 18px; }
+/*
+ * Woo's primary buttons carry its brand purple through the `.alt` class —
+ * `.woocommerce button.button.alt` (0,3,1) — which outranks the plain button
+ * rule above. The single add-to-cart button is `button alt`, so without this
+ * the main call to action on every product page is #7f54b3.
+ */
+.woocommerce #respond input#submit.alt,
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt {
+	background-color: var(--teal);
+	border-color: var(--teal);
+	color: var(--ink);
+}
+.woocommerce #respond input#submit.alt:hover,
+.woocommerce a.button.alt:hover,
+.woocommerce button.button.alt:hover,
+.woocommerce input.button.alt:hover {
+	background-color: var(--teal-light);
+	color: var(--ink);
+}
+.woocommerce a.button.alt.disabled,
+.woocommerce button.button.alt.disabled,
+.woocommerce button.button.alt:disabled {
+	background-color: #2a2a2a;
+	border-color: #2a2a2a;
+	color: var(--dim);
+}
+
+/* Stock status: Woo greens this too. */
+.woocommerce div.product .stock,
+.woocommerce div.product p.stock,
+.woocommerce .stock.in-stock {
+	color: var(--teal-muted);
+	font-size: 12px;
+	letter-spacing: 1.6px;
+	text-transform: uppercase;
+	margin: 0 0 4px;
+}
+.woocommerce div.product .stock.out-of-stock,
+.woocommerce .stock.out-of-stock { color: #c98b7a; }
+
+/*
+ * The compliance notice is a legal requirement, not fine print to be hidden.
+ * --faint is for the footer colophon; this needs to be readable.
+ */
+.pdp__compliance {
+	margin-top: 18px;
+	color: var(--muted);
+}
+
+.related,
+.upsells,
+.cross-sells { margin-top: var(--section-y); }
 
 .woocommerce-tabs { margin-top: var(--section-y); }
 .woocommerce-tabs ul.tabs {
