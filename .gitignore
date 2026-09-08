@@ -1,0 +1,28 @@
+# This repo is the THEME only. WordPress core, config and uploads never belong here.
+wp-config.php
+wp-content/uploads/
+wp-admin/
+wp-includes/
+
+# Databases and dumps — never commit these
+*.sql
+*.sql.gz
+*.sqlite
+
+# Local environment
+.env
+.env.*
+!.env.example
+.htaccess.local
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Build
+node_modules/
+vendor/
+*.log
