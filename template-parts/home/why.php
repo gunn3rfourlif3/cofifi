@@ -1,6 +1,6 @@
 <?php
 /**
- * Why Cofifi — four numbered columns.
+ * Why COFiFi — four numbered columns.
  *
  * @package Cofifi
  */

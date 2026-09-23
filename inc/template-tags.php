@@ -97,7 +97,7 @@ function cofifi_compliance_line( $kind = 'general' ) {
 		// Sitewide. Must be true of every product in the shop, so it states no
 		// THC figure at all — the range runs from none to 750 mg.
 		default:
-			$line = __( 'Cofifi sells food products. Nothing here is intended to diagnose, treat, cure or prevent any disease. Products containing CBD or THC are not for sale to anyone under 18, and not for use by anyone who is pregnant or breastfeeding.', 'cofifi' );
+			$line = __( 'COFiFi sells food products. Nothing here is intended to diagnose, treat, cure or prevent any disease. Products containing CBD or THC are not for sale to anyone under 18, and not for use by anyone who is pregnant or breastfeeding.', 'cofifi' );
 			break;
 	}
 

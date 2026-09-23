@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'COFIFI_BOOTSTRAP', 4 );
+define( 'COFIFI_BOOTSTRAP', 6 );
 
 /**
  * Run any bootstrap steps this install has not reached yet.
@@ -28,9 +28,97 @@ function cofifi_bootstrap() {
 	// start it at once.
 	update_option( 'cofifi_bootstrap', COFIFI_BOOTSTRAP, true );
 
+	cofifi_bootstrap_brand();
 	cofifi_bootstrap_gallery_page();
 	cofifi_bootstrap_catalogue();
 	cofifi_bootstrap_retire_thc_claim();
+	cofifi_bootstrap_footer_shop_menu();
+}
+
+/**
+ * Rebuild the footer Shop menu from the catalogue.
+ *
+ * It was seeded with a "Coffee CBD+" that no longer exists and a "Bundles"
+ * that never did. Only items still pointing at whatever they were seeded with
+ * are replaced: if every label in the menu has been edited by hand, the whole
+ * menu is left alone.
+ */
+function cofifi_bootstrap_footer_shop_menu() {
+	$locations = get_nav_menu_locations();
+
+	if ( empty( $locations['footer-shop'] ) || ! function_exists( 'wc_get_page_permalink' ) ) {
+		return;
+	}
+
+	$menu_id = (int) $locations['footer-shop'];
+	$items   = wp_get_nav_menu_items( $menu_id );
+	$seeded  = array( 'COFiFi Coffee', 'Cofifi Coffee', 'Coffee CBD+', 'CBD Oil — Focus', 'Bundles' );
+
+	if ( $items ) {
+		foreach ( $items as $item ) {
+			if ( ! in_array( $item->title, $seeded, true ) ) {
+				return; // Someone has curated this. Leave it.
+			}
+		}
+		foreach ( $items as $item ) {
+			wp_delete_post( $item->ID, true );
+		}
+	}
+
+	$shop = wc_get_page_permalink( 'shop' );
+
+	$wanted = array(
+		array( __( 'COFiFi Coffee', 'cofifi' ), 'coffee' ),
+		array( __( 'CBD + Coffee', 'cofifi' ), 'cbd-plus' ),
+		array( __( 'Rasta Roast', 'cofifi' ), 'rasta-roast' ),
+		array( __( 'CBD Oil — Focus', 'cofifi' ), 'cbd-oil' ),
+	);
+
+	foreach ( $wanted as $row ) {
+		list( $label, $slug ) = $row;
+
+		$term = get_term_by( 'slug', $slug, 'product_cat' );
+		$url  = $shop;
+
+		if ( $term && ! is_wp_error( $term ) ) {
+			$link = get_term_link( $term );
+			if ( ! is_wp_error( $link ) ) {
+				$url = $link;
+			}
+		}
+
+		wp_update_nav_menu_item( $menu_id, 0, array(
+			'menu-item-title' => $label,
+			'menu-item-url'    => $url,
+			'menu-item-type'   => 'custom',
+			'menu-item-status' => 'publish',
+		) );
+	}
+}
+
+/**
+ * Bring the brand details on a running install up to date.
+ *
+ * The site title and the contact address were seeded before anyone had the
+ * domain. Only the exact seeded values are replaced — anything the shop has
+ * since written for itself is left alone.
+ *
+ * Product names are handled by the catalogue seeder, which runs after this.
+ */
+function cofifi_bootstrap_brand() {
+	if ( 'Cofifi' === get_option( 'blogname' ) ) {
+		update_option( 'blogname', 'COFiFi' );
+	}
+
+	$stale_email = array( '[hello@cofifi.co]', '[hello@cofifi.com]', 'hello@cofifi.co' );
+
+	if ( in_array( get_theme_mod( 'cofifi_email' ), $stale_email, true ) ) {
+		set_theme_mod( 'cofifi_email', 'hello@cofifi.com' );
+	}
+
+	if ( ! get_theme_mod( 'cofifi_legal_name' ) ) {
+		set_theme_mod( 'cofifi_legal_name', 'CoFiFi Roastery' );
+	}
 }
 
 /**

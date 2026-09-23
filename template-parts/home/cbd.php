@@ -43,12 +43,12 @@ defined( 'ABSPATH' ) || exit;
 			<div class="grid grid-2">
 				<figure style="margin:0;overflow:hidden;border:1px solid var(--line-cbd);aspect-ratio:1/1.15">
 					<img src="<?php echo esc_url( cofifi_img( 'oil-dropper.jpg' ) ); ?>"
-					     alt="<?php esc_attr_e( 'Cofifi CBD oil dropper', 'cofifi' ); ?>"
+					     alt="<?php esc_attr_e( 'COFiFi CBD oil dropper', 'cofifi' ); ?>"
 					     style="width:100%;height:100%;object-fit:cover" width="620" height="620" loading="lazy">
 				</figure>
 				<figure style="margin:0;overflow:hidden;border:1px solid var(--line-cbd);aspect-ratio:1/1.15">
 					<img src="<?php echo esc_url( cofifi_img( 'oil-box.jpg' ) ); ?>"
-					     alt="<?php esc_attr_e( 'Cofifi CBD oil bottle and carton', 'cofifi' ); ?>"
+					     alt="<?php esc_attr_e( 'COFiFi CBD oil bottle and carton', 'cofifi' ); ?>"
 					     style="width:100%;height:100%;object-fit:cover" width="700" height="701" loading="lazy">
 				</figure>
 			</div>

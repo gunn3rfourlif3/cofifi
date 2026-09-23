@@ -60,7 +60,7 @@ $trust = array(
 
 			<img class="packshot__img"
 			     src="<?php echo esc_url( cofifi_img( 'pack-hero.webp' ) ); ?>"
-			     alt="<?php esc_attr_e( 'Cofifi Coffee — 250 g, 100% Ethiopian', 'cofifi' ); ?>"
+			     alt="<?php esc_attr_e( 'COFiFi Coffee — 250 g, 100% Ethiopian', 'cofifi' ); ?>"
 			     width="1000" height="1603" fetchpriority="high">
 
 			<span class="packshot__floor" aria-hidden="true"></span>

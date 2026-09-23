@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 				<h5><?php esc_html_e( 'Shop', 'cofifi' ); ?></h5>
 				<?php
 				cofifi_menu( 'footer-shop', array(
-					__( 'Cofifi Coffee', 'cofifi' )      => cofifi_shop_url(),
+					__( 'COFiFi Coffee', 'cofifi' )      => cofifi_shop_url(),
 					__( 'Coffee CBD+', 'cofifi' )        => cofifi_shop_url(),
 					__( 'CBD Oil — Focus', 'cofifi' )    => cofifi_shop_url(),
 					__( 'Bundles', 'cofifi' )            => cofifi_shop_url(),
@@ -78,8 +78,8 @@ defined( 'ABSPATH' ) || exit;
 			<p class="legal"><?php echo esc_html( cofifi_compliance_line() ); ?></p>
 			<span class="legal" style="white-space:nowrap">
 				<?php
-				/* translators: %1$s: year, %2$s: site name. */
-				printf( esc_html__( '© %1$s %2$s · Terms · Privacy', 'cofifi' ), esc_html( gmdate( 'Y' ) ), esc_html( get_bloginfo( 'name' ) ) );
+				/* translators: %1$s: year, %2$s: registered name. */
+				printf( esc_html__( '© %1$s %2$s · Terms · Privacy', 'cofifi' ), esc_html( gmdate( 'Y' ) ), esc_html( cofifi_option( 'legal_name' ) ) );
 				?>
 			</span>
 		</div>

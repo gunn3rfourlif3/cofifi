@@ -59,7 +59,7 @@ if ( function_exists( 'wc_get_products' ) ) {
 						'img'   => 'prod-coffee-sq.webp',
 						'pos'   => '50% 50%',
 						'meta'  => __( '100% Ethiopian · 250 g', 'cofifi' ),
-						'title' => __( 'Cofifi Coffee', 'cofifi' ),
+						'title' => __( 'COFiFi Coffee', 'cofifi' ),
 						'copy'  => __( 'Creamy, smooth and low in acidity. The everyday bag — traditional pan-roast, ground or whole bean.', 'cofifi' ),
 						'price' => 'R265',
 						'cbd'   => false,

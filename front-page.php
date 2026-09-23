@@ -3,7 +3,7 @@
  * Homepage.
  *
  * Section order is the designed funnel — hero, the two category doors, the
- * range, the story, the CBD spotlight, Rasta Roast, why Cofifi, the gallery,
+ * range, the story, the CBD spotlight, Rasta Roast, why COFiFi, the gallery,
  * subscription,
  * newsletter.
  * Changing the order changes the argument the page makes, so don't reorder

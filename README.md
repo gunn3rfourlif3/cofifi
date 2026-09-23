@@ -4,6 +4,23 @@ Custom WooCommerce theme for **Cofifi, Afro Coffee & Treats Co.** Classic PHP th
 
 This repository is the **theme only**. WordPress core, `wp-config.php`, uploads and the database are never committed.
 
+## Names and where they live
+
+| | Value | Why |
+|---|---|---|
+| Domain | **cofifi.com** | Registered through Google Workspace; DNS is managed there |
+| Brand, as written | **COFiFi** | Matches the logo and the bags. Used in every heading, product name and paragraph |
+| Registered name | **CoFiFi Roastery** | As it reads on the Workspace billing record. The footer copyright uses this, **not** the brand styling — it is a legal name, transcribed, not set |
+| Contact | **hello@cofifi.com** | Customizer → COFiFi details |
+| Local dev | `http://localhost/cofifi` | Files stay in `htdocs\development\cofifi`; an Apache alias joins the two |
+
+`CoFiFi Roastery` in the footer is not a typo. If the registration actually reads something else,
+change `legal_name` in `inc/setup.php` (or the Customizer) — don't reach for find-and-replace.
+
+**`cofifi` in lower case is an identifier, never a display name.** It is the text domain, the
+function prefix, the `COFIFI_` constants, the theme folder and the `@package` tag. Renaming the
+brand must never touch any of them.
+
 ---
 
 ## Install
@@ -118,7 +135,7 @@ lookup per request. Bump `COFIFI_BOOTSTRAP` to make it run again.
 Not optional.
 
 - **No medical or therapeutic claims anywhere.** Describe carrier oil, spectrum, terpenes, dose and format. A product named "Focus" is fine; a claim about what it does is not.
-- The disclaimer in `cofifi_compliance_line()` renders in the footer on every page, and again under the add-to-cart form on any product in the `cbd`, `cbd-oil` or `cbd-plus` category, or tagged `cbd`. **Keep those taxonomy terms in place.**
+- `cofifi_compliance_line()` renders in the footer on every page, and again under the add-to-cart form on any product in `cbd`, `cbd-oil`, `cbd-plus`, `thc` or `rasta-roast`. **Keep those taxonomy terms in place** — see the table below.
 - Publish the certificate of analysis against the batch number.
 - Have a person with legal responsibility read the CBD copy before launch. Nothing here has been legally reviewed.
 
@@ -209,6 +226,11 @@ Served at `http://localhost/cofifi` via an Apache alias — see [setup/README.md
 ## Deployment
 
 The site runs in its own container on the VPS. This repo is pulled into `wp-content/themes/cofifi` on the server; core, plugins, uploads and the database are managed there, not here.
+
+**cofifi.com is registered through Google Workspace**, so DNS lives in the Google admin console,
+not at the host. Going live means pointing the A record (and `www`) at the VPS there — and
+leaving the MX records alone, or Workspace mail stops. Set `SITE_URL=https://cofifi.com` when
+running the installer on the server.
 
 ## Conventions
 

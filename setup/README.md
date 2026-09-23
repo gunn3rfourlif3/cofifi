@@ -64,7 +64,7 @@ setup\install.ps1 -SiteUrl "http://localhost/cofifi" `
 ```
 
 ```bash
-SITE_URL=https://cofifi.co.za DB_NAME=cofifi DB_USER=cofifi DB_PASS=… \
+SITE_URL=https://cofifi.com DB_NAME=cofifi DB_USER=cofifi DB_PASS=… \
 ADMIN_USER=cofifi ADMIN_EMAIL=you@example.com ./setup/install.sh
 ```
 

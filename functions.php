@@ -1,6 +1,6 @@
 <?php
 /**
- * Cofifi theme bootstrap.
+ * COFiFi theme bootstrap.
  *
  * @package Cofifi
  */

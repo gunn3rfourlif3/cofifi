@@ -85,7 +85,14 @@ function cofifi_option( $key ) {
 		'free_delivery'  => '[R950]',
 		'address_line_1' => '[Street address]',
 		'address_line_2' => '[City, postal code]',
-		'email'          => '[hello@cofifi.co]',
+		'email'          => 'hello@cofifi.com',
+		/*
+		 * The registered entity, as it reads on the Google Workspace billing
+		 * record. Deliberately NOT the brand styling: "COFiFi" is how the
+		 * brand is set, "CoFiFi Roastery" is who the money is owed to. Don't
+		 * "fix" the capitals here — change it only against the registration.
+		 */
+		'legal_name'     => 'CoFiFi Roastery',
 		'utility_1'      => __( 'Roasted by women, the traditional way', 'cofifi' ),
 		'utility_2'      => __( 'Cannabis range — strictly 18+', 'cofifi' ),
 	);
@@ -93,7 +100,7 @@ function cofifi_option( $key ) {
 	$value = get_theme_mod( 'cofifi_' . $key, isset( $defaults[ $key ] ) ? $defaults[ $key ] : '' );
 
 	/**
-	 * Filter a Cofifi theme option.
+	 * Filter a COFiFi theme option.
 	 *
 	 * @param string $value Option value.
 	 * @param string $key   Option key.
@@ -108,7 +115,7 @@ function cofifi_option( $key ) {
  */
 function cofifi_customize_register( $wp_customize ) {
 	$wp_customize->add_section( 'cofifi_brand', array(
-		'title'       => __( 'Cofifi details', 'cofifi' ),
+		'title'       => __( 'COFiFi details', 'cofifi' ),
 		'priority'    => 30,
 		'description' => __( 'Values shown in square brackets are placeholders and should be replaced before launch.', 'cofifi' ),
 	) );
@@ -118,6 +125,7 @@ function cofifi_customize_register( $wp_customize ) {
 		'address_line_1' => __( 'Address line 1', 'cofifi' ),
 		'address_line_2' => __( 'Address line 2', 'cofifi' ),
 		'email'          => __( 'Contact email', 'cofifi' ),
+		'legal_name'     => __( 'Registered name (footer copyright)', 'cofifi' ),
 		'utility_1'      => __( 'Utility bar — message 1', 'cofifi' ),
 		'utility_2'      => __( 'Utility bar — message 2', 'cofifi' ),
 	);

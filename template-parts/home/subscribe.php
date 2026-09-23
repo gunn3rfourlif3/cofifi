@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="split__media">
 				<img src="<?php echo esc_url( cofifi_img( 'ritual.webp' ) ); ?>"
-				     alt="<?php esc_attr_e( 'The Cofifi range beside a freshly poured cup', 'cofifi' ); ?>"
+				     alt="<?php esc_attr_e( 'The COFiFi range beside a freshly poured cup', 'cofifi' ); ?>"
 				     width="800" height="600" loading="lazy">
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Cofifi site provisioning.
+ * COFiFi site provisioning.
  *
  * Runs inside a live WordPress with WooCommerce active:
  *
@@ -28,14 +28,14 @@ $skip_menus    = in_array( '--skip-menus', $argv, true );
 $has_woo = class_exists( 'WooCommerce' );
 
 WP_CLI::line( '' );
-WP_CLI::line( '  Cofifi provisioning' );
+WP_CLI::line( '  COFiFi provisioning' );
 WP_CLI::line( '  ------------------' );
 
 /* -------------------------------------------------------------------------
  * 1. Site options
  * ---------------------------------------------------------------------- */
 
-update_option( 'blogname', 'Cofifi' );
+update_option( 'blogname', 'COFiFi' );
 update_option( 'blogdescription', 'Afro Coffee & Treats Co.' );
 update_option( 'timezone_string', 'Africa/Johannesburg' );
 update_option( 'date_format', 'j F Y' );
@@ -73,13 +73,14 @@ if ( 'cofifi' !== get_option( 'stylesheet' ) ) {
 /*
  * Placeholder values. Every one of these is a stand-in for a fact nobody has
  * confirmed — they stay in square brackets on purpose so they are impossible to
- * miss on the page. Replace them in Appearance → Customize → Cofifi details.
+ * miss on the page. Replace them in Appearance → Customize → COFiFi details.
  */
 $mods = array(
 	'cofifi_free_delivery'  => '[R950]',
 	'cofifi_address_line_1' => '[Street address]',
 	'cofifi_address_line_2' => '[City, postal code]',
-	'cofifi_email'          => '[hello@cofifi.co]',
+	'cofifi_email'          => 'hello@cofifi.com',
+	'cofifi_legal_name'     => 'CoFiFi Roastery',
 	'cofifi_utility_1'      => 'Roasted by women, the traditional way',
 	'cofifi_utility_2'      => 'Cannabis range — strictly 18+',
 );
@@ -89,7 +90,7 @@ foreach ( $mods as $key => $value ) {
 		set_theme_mod( $key, $value );
 	}
 }
-WP_CLI::log( '  placeholders   seeded (Customize → Cofifi details)' );
+WP_CLI::log( '  placeholders   seeded (Customize → COFiFi details)' );
 
 /* -------------------------------------------------------------------------
  * 3. WooCommerce settings
@@ -197,13 +198,24 @@ if ( ! empty( $page_ids['home'] ) && ! empty( $page_ids['journal'] ) ) {
 if ( ! $skip_menus ) {
 	$shop_url = $has_woo ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
 
+	// Category archives, so a footer link lands somewhere real. Falls back to
+	// the shop if a term is missing.
+	$cat_url = function ( $slug ) use ( $shop_url ) {
+		$term = get_term_by( 'slug', $slug, 'product_cat' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return $shop_url;
+		}
+		$url = get_term_link( $term );
+		return is_wp_error( $url ) ? $shop_url : $url;
+	};
+
 	$menus = array(
 		'primary' => array(
 			'name'  => 'Primary',
 			'items' => array(
 				array( 'Coffee', $shop_url ),
-				array( 'CBD Oil', $shop_url ),
-				array( 'Bundles', $shop_url ),
+				array( 'CBD Oil', $cat_url( 'cbd-oil' ) ),
+				array( 'Rasta Roast', $cat_url( 'rasta-roast' ) ),
 				array( 'Our Story', get_permalink( $page_ids['our-story'] ) ),
 				array( 'Gallery', get_permalink( $page_ids['gallery'] ) ),
 				array( 'Wholesale', get_permalink( $page_ids['wholesale'] ) ),
@@ -212,10 +224,10 @@ if ( ! $skip_menus ) {
 		'footer-shop' => array(
 			'name'  => 'Footer — Shop',
 			'items' => array(
-				array( 'Cofifi Coffee', $shop_url ),
-				array( 'Coffee CBD+', $shop_url ),
-				array( 'CBD Oil — Focus', $shop_url ),
-				array( 'Bundles', $shop_url ),
+				array( 'COFiFi Coffee', $cat_url( 'coffee' ) ),
+				array( 'CBD + Coffee', $cat_url( 'cbd-plus' ) ),
+				array( 'Rasta Roast', $cat_url( 'rasta-roast' ) ),
+				array( 'CBD Oil — Focus', $cat_url( 'cbd-oil' ) ),
 			),
 		),
 		'footer-learn' => array(
@@ -362,7 +374,7 @@ WP_CLI::success( 'Provisioning complete — ' . home_url( '/' ) );
 WP_CLI::line( '' );
 WP_CLI::warning( 'Sample data in place. Before launch, replace:' );
 WP_CLI::line( '    · prices R265 / R395 / R620 — invented, not real' );
-WP_CLI::line( '    · every [bracketed] value in Customize → Cofifi details' );
+WP_CLI::line( '    · every [bracketed] value in Customize → COFiFi details' );
 WP_CLI::line( '    · [batch number] on both CBD products, and link the real COA' );
 WP_CLI::line( '' );
 WP_CLI::line( '  Keep the cbd, cbd-oil and cbd-plus categories — the compliance' );

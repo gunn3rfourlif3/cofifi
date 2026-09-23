@@ -56,11 +56,11 @@ function cofifi_catalogue() {
 	$catalogue = array(
 
 		/* ---------------------------------------------------------------
-		 * Cofifi — the house line
+		 * COFiFi — the house line
 		 * ------------------------------------------------------------ */
 		array(
 			'sku'        => 'COF-COFFEE-250',
-			'name'       => __( 'Cofifi Coffee', 'cofifi' ),
+			'name'       => __( 'COFiFi Coffee', 'cofifi' ),
 			'price'      => '265.00',
 			'image'      => 'prod-coffee-sq.webp',
 			'cats'       => array( 'coffee' ),
@@ -78,7 +78,7 @@ function cofifi_catalogue() {
 		array(
 			'sku'        => 'COF-CBD-THC150-250',
 			'renames'    => array( 'COF-CBD-250' ),
-			'name'       => __( 'Cofifi CBD + Coffee — THC 150 mg', 'cofifi' ),
+			'name'       => __( 'COFiFi CBD + Coffee — THC 150 mg', 'cofifi' ),
 			'price'      => '395.00',
 			'image'      => 'prod-cbd150-sq.webp',
 			'cats'       => array( 'coffee', 'cbd', 'cbd-plus', 'thc' ),
@@ -98,7 +98,7 @@ function cofifi_catalogue() {
 
 		array(
 			'sku'        => 'COF-CBD-THC750-250',
-			'name'       => __( 'Cofifi CBD + Coffee — THC 750 mg', 'cofifi' ),
+			'name'       => __( 'COFiFi CBD + Coffee — THC 750 mg', 'cofifi' ),
 			'price'      => '545.00',
 			'image'      => 'prod-cbd750-sq.webp',
 			'cats'       => array( 'coffee', 'cbd', 'cbd-plus', 'thc' ),
@@ -143,7 +143,7 @@ function cofifi_catalogue() {
 		 * ------------------------------------------------------------ */
 		array(
 			'sku'        => 'COF-OIL-30',
-			'name'       => __( 'Cofifi CBD Oil — Focus', 'cofifi' ),
+			'name'       => __( 'COFiFi CBD Oil — Focus', 'cofifi' ),
 			'price'      => '620.00',
 			'image'      => 'oil-white.jpg',
 			'cats'       => array( 'cbd', 'cbd-oil' ),

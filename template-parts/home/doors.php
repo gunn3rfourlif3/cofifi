@@ -11,9 +11,9 @@ $doors = array(
 	array(
 		'class' => '',
 		'img'   => 'door-coffee.webp',
-		'alt'   => __( 'Cofifi coffee, 250 g bags', 'cofifi' ),
+		'alt'   => __( 'COFiFi coffee, 250 g bags', 'cofifi' ),
 		'kicker'=> __( '01 — The Roastery', 'cofifi' ),
-		'title' => __( 'Cofifi Coffee', 'cofifi' ),
+		'title' => __( 'COFiFi Coffee', 'cofifi' ),
 		'copy'  => __( '100% Ethiopian beans, pan-roasted the traditional way by the women of our roastery. Creamy, smooth, low in acidity — with or without CBD.', 'cofifi' ),
 		'cta'   => __( 'Shop coffee', 'cofifi' ),
 		'link'  => 'link-arrow',
@@ -21,9 +21,9 @@ $doors = array(
 	array(
 		'class' => ' door--cbd',
 		'img'   => 'oil-desk.jpg',
-		'alt'   => __( 'Cofifi CBD oil on a desk beside a cup of coffee', 'cofifi' ),
+		'alt'   => __( 'COFiFi CBD oil on a desk beside a cup of coffee', 'cofifi' ),
 		'kicker'=> __( '02 — The Apothecary', 'cofifi' ),
-		'title' => __( 'Cofifi CBD Oil', 'cofifi' ),
+		'title' => __( 'COFiFi CBD Oil', 'cofifi' ),
 		'copy'  => __( 'Focus, 150 mg in 30 ml. Third-party tested, under 0.3% THC, and made to sit alongside your morning cup rather than replace it.', 'cofifi' ),
 		'cta'   => __( 'Shop CBD oil', 'cofifi' ),
 		'link'  => 'link-arrow link-arrow--teal',
