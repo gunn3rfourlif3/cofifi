@@ -29,8 +29,8 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 			</div>
 			<div class="split__media">
-				<img src="<?php echo esc_url( cofifi_img( 'sharing.jpg' ) ); ?>"
-				     alt="<?php esc_attr_e( 'Two cups of coffee shared', 'cofifi' ); ?>"
+				<img src="<?php echo esc_url( cofifi_img( 'ritual.webp' ) ); ?>"
+				     alt="<?php esc_attr_e( 'The Cofifi range beside a freshly poured cup', 'cofifi' ); ?>"
 				     width="800" height="600" loading="lazy">
 			</div>
 		</div>

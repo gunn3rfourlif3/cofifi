@@ -50,19 +50,22 @@ cofifi/
 │   ├── setup.php              Supports, menus, image sizes, Customizer
 │   ├── enqueue.php            Styles, scripts, font preload
 │   ├── template-tags.php      Inline SVG icons and helpers
+│   ├── gallery.php            Photo manifest, tile + lightbox markup
+│   ├── bootstrap.php          One-shot content bootstrap (see Gallery)
 │   └── woocommerce.php        Woo supports and hooks
 ├── header.php  footer.php
 ├── front-page.php             Homepage
 ├── index.php  page.php  single.php  404.php  searchform.php
+├── page-gallery.php           Template Name: Gallery
 ├── template-parts/
 │   ├── home/                  One file per homepage section
 │   └── components/            product-card
 ├── woocommerce/               Only the templates that actually needed changing
 └── assets/
     ├── css/theme.css          The stylesheet
-    ├── js/theme.js            Nav drawer, accordions, gallery, quantity
+    ├── js/theme.js            Nav drawer, accordions, quantity, lightbox
     ├── fonts/                 Amulya (self-hosted brand font)
-    └── img/                   Brand photography and the cut-out packshot
+    └── img/                   Brand photography, packshot, gallery/
 ```
 
 ## Design system
@@ -92,6 +95,23 @@ The order is the argument the page makes. Don't reorder it without a reason.
 
 The add-to-cart form is deliberately left to WooCommerce's own templates. The designed grind and size pills are variation selectors; hand-rolling them here would break variable products and stock handling. Woo's selects are styled to match — swapping them for pills is a progressive enhancement, not a template rewrite.
 
+## Gallery
+
+`inc/gallery.php` is the manifest — one row per photograph, with its alt text and caption.
+`cofifi_gallery_tile()` renders a tile, `cofifi_lightbox()` prints the overlay. The homepage
+strip (`template-parts/home/gallery.php`) and the Gallery page (`page-gallery.php`) both use
+them, so the lightbox needs no per-page wiring: it reads the full-size source and caption off
+the tiles themselves.
+
+To add a photograph, drop `gNN.webp` (1000×667) and `gNN-full.webp` (1920×1280) into
+`assets/img/gallery/` and add a row to `cofifi_gallery_items()` — or filter
+`cofifi_gallery_items` from a child theme.
+
+The **Gallery page** is created by `setup/provision.php` on a new install, and by
+`inc/bootstrap.php` on one that is already running. `bootstrap.php` runs once, records the
+version it reached in the autoloaded `cofifi_bootstrap` option, and afterwards costs one array
+lookup per request. Bump `COFIFI_BOOTSTRAP` to make it run again.
+
 ## CBD compliance
 
 Not optional.
@@ -101,15 +121,40 @@ Not optional.
 - Publish the certificate of analysis against the batch number.
 - Have a person with legal responsibility read the CBD copy before launch. Nothing here has been legally reviewed.
 
+### Unresolved: the labels and the copy disagree
+
+The product photography shows labels reading **THC 750mg** and **THC 150mg**, and a
+**Rasta Roast / Mada Kush** sub-brand that is not in the catalogue. The site states
+**“Contains less than 0.3% THC”** in the utility bar, the hero trust row, the CBD band and two
+product descriptions. Both cannot be true of the same product.
+
+Nothing here resolves it. The photographs are used as shot and the copy is unchanged, so the
+Coffee CBD+ product page currently shows a bag labelled 750 mg THC beside a claim of under
+0.3%. Somebody with legal responsibility has to decide which is correct; the other one has to
+change. Treat this as blocking for launch, not as a design note.
+
 ## Placeholders and sample data
 
 Values in **[square brackets]** are placeholders for facts nobody has confirmed yet — free-delivery threshold, address, contact email. They are editable in **Customize → Cofifi details**. Prices, batch numbers and the "Ceremony Set" bundle in the design are sample content. Replace before launch; don't invent figures that look real.
 
 ## Image notes
 
-`assets/img/pack-hero.webp` is the hero packshot, cut out from the studio shot and relit on black.
+`assets/img/` carries the product shoot. Every derivative is WebP, generated from the 6036 px
+originals; the originals are not in the repo.
 
-Some of the supplied product renders carry AI-garbled label text ("AFIO COFFEE & TIEATE CO.", "100% Ethiopien") — `hero-4.png`, `hero-2.png`, `hero-3.png`, `qwen-1.png` and the two-bag shot. They are used small or cropped only. Reshoot before those appear at any size where the label is readable.
+| File | What it is |
+|---|---|
+| `pack-hero.webp` | The hero packshot — cut out of the studio frame and relit on black |
+| `door-coffee.webp` | The Roastery door |
+| `roastery.webp` | The story band |
+| `ritual.webp` | The standing-order band |
+| `prod-coffee-sq.webp`, `prod-cbd-sq.webp` | Seeded product images, sideloaded into the media library |
+| `gallery/gNN.webp` + `gNN-full.webp` | The gallery: a 1000×667 tile and a 1920×1280 frame each |
+| `oil-*.jpg` | The CBD oil. The shoot is coffee only, so the oil keeps its own photography |
+
+The AI-garbled renders are gone — labels reading “AFIO COFFEE & TIEATE CO.” or “100% Ethiopien”
+are not in the theme any more. Don't bring them back; the real shoot covers every slot that used
+one.
 
 Served at `http://localhost/cofifi` via an Apache alias — see [setup/README.md](setup/README.md).
 

@@ -166,6 +166,7 @@ $pages = array(
 	'returns'          => 'Returns',
 	'contact'          => 'Contact',
 	'wholesale'        => 'Wholesale',
+	'gallery'          => 'Gallery',
 	'journal'          => 'Journal',
 );
 
@@ -186,6 +187,10 @@ foreach ( $pages as $slug => $title ) {
 		'post_name'    => $slug,
 		'post_content' => '',
 	) );
+}
+
+if ( ! empty( $page_ids['gallery'] ) ) {
+	update_post_meta( $page_ids['gallery'], '_wp_page_template', 'page-gallery.php' );
 }
 
 WP_CLI::log( '  pages          ' . count( $pages ) . ' checked/created' );
@@ -213,6 +218,7 @@ if ( ! $skip_menus ) {
 				array( 'CBD Oil', $shop_url ),
 				array( 'Bundles', $shop_url ),
 				array( 'Our Story', get_permalink( $page_ids['our-story'] ) ),
+				array( 'Gallery', get_permalink( $page_ids['gallery'] ) ),
 				array( 'Wholesale', get_permalink( $page_ids['wholesale'] ) ),
 			),
 		),
@@ -345,7 +351,7 @@ if ( $has_woo && ! $skip_products ) {
 			'sku'        => 'COF-COFFEE-250',
 			'name'       => 'Cofifi Coffee',
 			'price'      => '265.00',
-			'image'      => 'bag-double.jpg',
+			'image'      => 'prod-coffee-sq.webp',
 			'cats'       => array( 'coffee' ),
 			'featured'   => false,
 			'short'      => 'Creamy, smooth and low in acidity. The everyday bag — 100% Ethiopian, pan-roasted the traditional way.',
@@ -361,7 +367,7 @@ if ( $has_woo && ! $skip_products ) {
 			'sku'        => 'COF-CBD-250',
 			'name'       => 'Cofifi Coffee CBD+',
 			'price'      => '395.00',
-			'image'      => 'bag-single.jpg',
+			'image'      => 'prod-cbd-sq.webp',
 			'cats'       => array( 'coffee', 'cbd', 'cbd-plus' ),
 			'featured'   => true,
 			'short'      => 'The same Ethiopian roast with 150 mg of broad-spectrum CBD. Under 0.3% THC, third-party tested.',

@@ -14,6 +14,8 @@ define( 'COFIFI_URI', get_template_directory_uri() );
 require_once COFIFI_DIR . '/inc/setup.php';
 require_once COFIFI_DIR . '/inc/enqueue.php';
 require_once COFIFI_DIR . '/inc/template-tags.php';
+require_once COFIFI_DIR . '/inc/gallery.php';
+require_once COFIFI_DIR . '/inc/bootstrap.php';
 
 if ( class_exists( 'WooCommerce' ) ) {
 	require_once COFIFI_DIR . '/inc/woocommerce.php';

@@ -56,8 +56,8 @@ if ( function_exists( 'wc_get_products' ) ) {
 			} else {
 				$fallback = array(
 					array(
-						'img'   => 'bag-double.jpg',
-						'pos'   => '22% 45%',
+						'img'   => 'prod-coffee-sq.webp',
+						'pos'   => '50% 50%',
 						'meta'  => __( '100% Ethiopian · 250 g', 'cofifi' ),
 						'title' => __( 'Cofifi Coffee', 'cofifi' ),
 						'copy'  => __( 'Creamy, smooth and low in acidity. The everyday bag — traditional pan-roast, ground or whole bean.', 'cofifi' ),
@@ -66,8 +66,8 @@ if ( function_exists( 'wc_get_products' ) ) {
 						'badge' => '',
 					),
 					array(
-						'img'   => 'bag-single.jpg',
-						'pos'   => '50% 42%',
+						'img'   => 'prod-cbd-sq.webp',
+						'pos'   => '50% 50%',
 						'meta'  => __( '100% Ethiopian · CBD+ 150 mg · 250 g', 'cofifi' ),
 						'title' => __( 'Coffee CBD+', 'cofifi' ),
 						'copy'  => __( 'The same bag, infused with 150 mg of broad-spectrum CBD. Under 0.3% THC, third-party tested.', 'cofifi' ),

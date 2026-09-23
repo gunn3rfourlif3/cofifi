@@ -10,8 +10,8 @@ defined( 'ABSPATH' ) || exit;
 
 <section class="split split--fade-left" style="border-block:1px solid var(--line-soft)">
 	<div class="split__media">
-		<img src="<?php echo esc_url( cofifi_img( 'roasting.jpg' ) ); ?>"
-		     alt="<?php esc_attr_e( 'Coffee roasting drum', 'cofifi' ); ?>"
+		<img src="<?php echo esc_url( cofifi_img( 'roastery.webp' ) ); ?>"
+		     alt="<?php esc_attr_e( 'A Cofifi bag at the roastery', 'cofifi' ); ?>"
 		     width="760" height="506" loading="lazy">
 	</div>
 

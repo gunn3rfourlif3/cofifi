@@ -3,7 +3,8 @@
  * Homepage.
  *
  * Section order is the designed funnel — hero, the two category doors, the
- * range, the story, the CBD spotlight, why Cofifi, subscription, newsletter.
+ * range, the story, the CBD spotlight, why Cofifi, the gallery, subscription,
+ * newsletter.
  * Changing the order changes the argument the page makes, so don't reorder
  * without a reason.
  *
@@ -23,6 +24,7 @@ get_header();
 	get_template_part( 'template-parts/home/story' );
 	get_template_part( 'template-parts/home/cbd' );
 	get_template_part( 'template-parts/home/why' );
+	get_template_part( 'template-parts/home/gallery' );
 	get_template_part( 'template-parts/home/subscribe' );
 	get_template_part( 'template-parts/home/newsletter' );
 	?>

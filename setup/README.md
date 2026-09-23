@@ -97,10 +97,14 @@ wp eval-file setup/provision.php --skip-products --skip-menus
 - **Site:** title, tagline, `Africa/Johannesburg`, `/%postname%/` permalinks. Search-engine indexing is switched **off** automatically when the host is `localhost`, `.local` or `.test`.
 - **WooCommerce:** ZAR with a space thousands separator, South Africa, kg/cm, stock management on, `/shop/<slug>` product URLs, onboarding wizard suppressed.
 - **Categories:** `coffee`, `cbd`, `cbd-oil`, `cbd-plus`.
-- **Pages:** Home, Our story, The ceremony, Lab certificates, Brewing, Delivery, Returns, Contact, Wholesale, Journal — with Home as the front page and Journal as the posts page.
+- **Pages:** Home, Our story, The ceremony, Lab certificates, Brewing, Delivery, Returns, Contact, Wholesale, Journal, Gallery — with Home as the front page, Journal as the posts page, and Gallery on the `page-gallery.php` template.
 - **Menus:** Primary plus the four footer menus, created and assigned to their theme locations.
 - **Placeholders:** the bracketed values seeded into the Customizer.
 - **Products:** the three SKUs with images pulled from the theme's own assets, categories, attributes and stock.
+
+On an install that is already running, `inc/bootstrap.php` covers the subset that cannot wait for
+WP-CLI — it creates the Gallery page, adds it to the primary menu, and points the seeded products
+at the current photography. It runs once, guarded by the `cofifi_bootstrap` option.
 
 ## Two things to know
 

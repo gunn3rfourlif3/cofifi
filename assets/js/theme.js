@@ -125,3 +125,78 @@
 		});
 	});
 }());
+
+/* --------------------------------------------------------------------------
+ * Gallery lightbox
+ *
+ * The tiles carry their own full-size source and caption, so the lightbox
+ * needs no data island and works wherever cofifi_gallery_tile() is printed.
+ * ----------------------------------------------------------------------- */
+(function () {
+	var box = document.getElementById('cofifi-lightbox');
+	var tiles = Array.prototype.slice.call(document.querySelectorAll('[data-lightbox]'));
+
+	if (!box || !tiles.length) { return; }
+
+	var img = box.querySelector('.lb__img');
+	var cap = box.querySelector('.lb__cap');
+	var now = box.querySelector('[data-lb-index]');
+	var all = box.querySelector('[data-lb-total]');
+	var closeBtn = box.querySelector('.lb__btn--close');
+	var index = 0;
+	var opener = null;
+
+	all.textContent = tiles.length;
+
+	function frame(i) {
+		var picture = tiles[i].querySelector('img');
+		if (!picture) { return; }
+
+		index = i;
+		img.src = picture.getAttribute('data-full') || picture.src;
+		img.alt = picture.alt || '';
+		cap.textContent = picture.getAttribute('data-caption') || '';
+		now.textContent = i + 1;
+	}
+
+	function step(by) {
+		frame((index + by + tiles.length) % tiles.length);
+	}
+
+	function open(i, from) {
+		opener = from || null;
+		frame(i);
+		box.hidden = false;
+		document.body.classList.add('lb-open');
+		closeBtn.focus();
+	}
+
+	function close() {
+		box.hidden = true;
+		document.body.classList.remove('lb-open');
+		img.src = '';
+		if (opener) { opener.focus(); }
+		opener = null;
+	}
+
+	tiles.forEach(function (tile, i) {
+		tile.addEventListener('click', function () { open(i, tile); });
+	});
+
+	box.querySelectorAll('[data-lb-close]').forEach(function (btn) {
+		btn.addEventListener('click', close);
+	});
+
+	box.querySelectorAll('[data-lb-step]').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			step(parseInt(btn.getAttribute('data-lb-step'), 10) || 1);
+		});
+	});
+
+	document.addEventListener('keydown', function (e) {
+		if (box.hidden) { return; }
+		if (e.key === 'Escape') { close(); }
+		if (e.key === 'ArrowLeft') { step(-1); }
+		if (e.key === 'ArrowRight') { step(1); }
+	});
+}());

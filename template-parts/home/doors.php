@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 $doors = array(
 	array(
 		'class' => '',
-		'img'   => 'bag-double.jpg',
+		'img'   => 'door-coffee.webp',
 		'alt'   => __( 'Cofifi coffee, 250 g bags', 'cofifi' ),
 		'kicker'=> __( '01 — The Roastery', 'cofifi' ),
 		'title' => __( 'Cofifi Coffee', 'cofifi' ),
