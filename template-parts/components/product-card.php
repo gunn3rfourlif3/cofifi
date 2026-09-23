@@ -15,12 +15,30 @@ if ( ! $product instanceof WC_Product ) {
 	return;
 }
 
-$is_cbd = has_term( array( 'cbd', 'cbd-oil', 'cbd-plus' ), 'product_cat', $product->get_id() )
-	|| has_term( array( 'cbd' ), 'product_tag', $product->get_id() );
+// The teal accent marks the cannabis line — CBD and THC alike.
+$is_cbd = has_term( array( 'cbd', 'cbd-oil', 'cbd-plus', 'thc' ), 'product_cat', $product->get_id() )
+	|| has_term( array( 'cbd', 'thc' ), 'product_tag', $product->get_id() );
 
 $image_id = $product->get_image_id();
 $excerpt  = $product->get_short_description();
-$terms    = wc_get_product_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) );
+
+/*
+ * Only three category names fit on a card, and WooCommerce returns them
+ * alphabetically — which drops THC off the end of a bag whose whole point is
+ * the THC. Lead with what the label leads with.
+ */
+$slugs = wc_get_product_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
+$names = wc_get_product_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) );
+$by_slug = array_combine( $slugs, $names );
+$terms   = array();
+
+foreach ( array( 'thc', 'rasta-roast', 'cbd-oil', 'cbd-plus', 'cbd', 'coffee' ) as $slug ) {
+	if ( isset( $by_slug[ $slug ] ) ) {
+		$terms[] = $by_slug[ $slug ];
+		unset( $by_slug[ $slug ] );
+	}
+}
+$terms = array_merge( $terms, array_values( $by_slug ) );
 ?>
 
 <article <?php wc_product_class( 'prod' . ( $is_cbd ? ' prod--cbd' : '' ), $product ); ?>>

@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'COFIFI_BOOTSTRAP', 2 );
+define( 'COFIFI_BOOTSTRAP', 4 );
 
 /**
  * Run any bootstrap steps this install has not reached yet.
@@ -29,7 +29,27 @@ function cofifi_bootstrap() {
 	update_option( 'cofifi_bootstrap', COFIFI_BOOTSTRAP, true );
 
 	cofifi_bootstrap_gallery_page();
-	cofifi_bootstrap_product_images();
+	cofifi_bootstrap_catalogue();
+	cofifi_bootstrap_retire_thc_claim();
+}
+
+/**
+ * Retire the sitewide "less than 0.3% THC" line.
+ *
+ * It was seeded into the Customizer as a theme mod, which beats the default in
+ * inc/setup.php. It is false of the infused coffees — they carry 150 mg, 500 mg
+ * and 750 mg — so it cannot stand above every page. Only the exact old string
+ * is replaced; anything the shop has since written itself is left alone.
+ */
+function cofifi_bootstrap_retire_thc_claim() {
+	$stale = array(
+		'Contains less than 0.3% THC',
+		'Contains less than 0.3%% THC',
+	);
+
+	if ( in_array( get_theme_mod( 'cofifi_utility_2' ), $stale, true ) ) {
+		set_theme_mod( 'cofifi_utility_2', __( 'Cannabis range — strictly 18+', 'cofifi' ) );
+	}
 }
 add_action( 'init', 'cofifi_bootstrap', 20 );
 
@@ -101,35 +121,20 @@ function cofifi_bootstrap_menu_item( $location, $label, $page_id ) {
 }
 
 /**
- * Point the seeded products at the new photography.
+ * Bring the catalogue up to date.
  *
- * Only touches products carrying the `_cofifi_seeded` marker, so a real
- * catalogue is never overwritten. The CBD oil keeps its own shot — the new
- * shoot is coffee only.
+ * Categories first, then the products in inc/catalogue.php — created if
+ * missing, refreshed if they carry the `_cofifi_seeded` marker, and left alone
+ * otherwise. Nothing is ever deleted, and an old SKU listed under `renames` is
+ * carried across rather than duplicated.
  */
-function cofifi_bootstrap_product_images() {
+function cofifi_bootstrap_catalogue() {
 	if ( ! function_exists( 'wc_get_product_id_by_sku' ) ) {
 		return;
 	}
 
-	$map = array(
-		'COF-COFFEE-250' => 'prod-coffee-sq.webp',
-		'COF-CBD-250'    => 'prod-cbd-sq.webp',
-	);
-
-	foreach ( $map as $sku => $file ) {
-		$product_id = wc_get_product_id_by_sku( $sku );
-
-		if ( ! $product_id || ! get_post_meta( $product_id, '_cofifi_seeded', true ) ) {
-			continue;
-		}
-
-		$attachment_id = cofifi_sideload_theme_image( $file, $product_id );
-
-		if ( $attachment_id ) {
-			set_post_thumbnail( $product_id, $attachment_id );
-		}
-	}
+	cofifi_seed_categories();
+	cofifi_seed_products();
 }
 
 /**

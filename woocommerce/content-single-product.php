@@ -117,7 +117,7 @@ if ( ! empty( $attributes ) ) :
 					<p class="eyebrow"><?php esc_html_e( 'The profile', 'cofifi' ); ?></p>
 					<h2 class="t-sub"><?php esc_html_e( 'What’s in the bag', 'cofifi' ); ?></h2>
 					<p class="small" style="max-width:36ch">
-						<?php esc_html_e( 'Everything here is printed on the label too — origin, weight, CBD content and the batch it came from.', 'cofifi' ); ?>
+						<?php esc_html_e( 'Everything here is printed on the label too — origin, weight, cannabinoid content and the batch it came from.', 'cofifi' ); ?>
 					</p>
 				</div>
 

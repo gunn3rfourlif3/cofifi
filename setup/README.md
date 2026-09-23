@@ -96,7 +96,7 @@ wp eval-file setup/provision.php --skip-products --skip-menus
 
 - **Site:** title, tagline, `Africa/Johannesburg`, `/%postname%/` permalinks. Search-engine indexing is switched **off** automatically when the host is `localhost`, `.local` or `.test`.
 - **WooCommerce:** ZAR with a space thousands separator, South Africa, kg/cm, stock management on, `/shop/<slug>` product URLs, onboarding wizard suppressed.
-- **Categories:** `coffee`, `cbd`, `cbd-oil`, `cbd-plus`.
+- **Categories:** `coffee`, `cbd`, `cbd-oil`, `cbd-plus`, `thc`, `rasta-roast` — from `inc/catalogue.php`.
 - **Pages:** Home, Our story, The ceremony, Lab certificates, Brewing, Delivery, Returns, Contact, Wholesale, Journal, Gallery — with Home as the front page, Journal as the posts page, and Gallery on the `page-gallery.php` template.
 - **Menus:** Primary plus the four footer menus, created and assigned to their theme locations.
 - **Placeholders:** the bracketed values seeded into the Customizer.
@@ -108,9 +108,9 @@ at the current photography. It runs once, guarded by the `cofifi_bootstrap` opti
 
 ## Two things to know
 
-**The category slugs are load-bearing.** The CBD disclaimer renders under the add-to-cart form for products in `cbd`, `cbd-oil` or `cbd-plus`. Rename or delete those terms and a legal notice silently disappears from the page.
+**The category slugs are load-bearing.** The CBD notice renders under the add-to-cart form for products in `cbd`, `cbd-oil` or `cbd-plus`; the stronger THC notice for `thc` or `rasta-roast`, which outranks it. Rename or delete those terms and a legal notice silently disappears from the page.
 
-**The seeded data is sample data.** Prices R265 / R395 / R620 are invented, and batch numbers are `[batch number]`. Products carry a `_cofifi_seeded` meta flag so you can find them later:
+**The seeded data is partly sample data.** Names, weights and cannabinoid strengths are transcribed from the packaging. Prices (R265 / R395 / R420 / R545 / R620) are invented and batch numbers are `[batch number]`. Products carry a `_cofifi_seeded` meta flag so you can find them later:
 
 ```bash
 wp post list --post_type=product --meta_key=_cofifi_seeded --fields=ID,post_title

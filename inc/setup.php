@@ -87,7 +87,7 @@ function cofifi_option( $key ) {
 		'address_line_2' => '[City, postal code]',
 		'email'          => '[hello@cofifi.co]',
 		'utility_1'      => __( 'Roasted by women, the traditional way', 'cofifi' ),
-		'utility_2'      => __( 'Contains less than 0.3% THC', 'cofifi' ),
+		'utility_2'      => __( 'Cannabis range — strictly 18+', 'cofifi' ),
 	);
 
 	$value = get_theme_mod( 'cofifi_' . $key, isset( $defaults[ $key ] ) ? $defaults[ $key ] : '' );

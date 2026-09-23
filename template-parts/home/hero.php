@@ -11,7 +11,7 @@ $trust = array(
 	array( 'origin', __( '100%', 'cofifi' ), __( 'Ethiopian', 'cofifi' ) ),
 	array( 'women', __( 'Roasted', 'cofifi' ), __( 'by women', 'cofifi' ) ),
 	array( 'tested', __( '3rd-party', 'cofifi' ), __( 'tested', 'cofifi' ) ),
-	array( 'thc', __( 'Less than', 'cofifi' ), __( '0.3% THC', 'cofifi' ) ),
+	array( 'thc', __( 'Strictly', 'cofifi' ), __( '18 and over', 'cofifi' ) ),
 );
 ?>
 

@@ -81,7 +81,7 @@ $mods = array(
 	'cofifi_address_line_2' => '[City, postal code]',
 	'cofifi_email'          => '[hello@cofifi.co]',
 	'cofifi_utility_1'      => 'Roasted by women, the traditional way',
-	'cofifi_utility_2'      => 'Contains less than 0.3% THC',
+	'cofifi_utility_2'      => 'Cannabis range — strictly 18+',
 );
 
 foreach ( $mods as $key => $value ) {
@@ -131,23 +131,10 @@ if ( $has_woo ) {
 
 	WP_CLI::log( '  woocommerce    ZAR, ZA, /shop/<slug> product URLs' );
 
-	/*
-	 * Product categories. The theme gates the CBD disclaimer on these slugs —
-	 * cbd, cbd-oil and cbd-plus. Renaming them silently drops a legal notice.
-	 */
-	$cats = array(
-		'coffee'   => 'Coffee',
-		'cbd'      => 'CBD',
-		'cbd-oil'  => 'CBD Oil',
-		'cbd-plus' => 'Coffee CBD+',
-	);
-
-	foreach ( $cats as $slug => $name ) {
-		if ( ! term_exists( $slug, 'product_cat' ) ) {
-			wp_insert_term( $name, 'product_cat', array( 'slug' => $slug ) );
-		}
-	}
-	WP_CLI::log( '  categories     coffee, cbd, cbd-oil, cbd-plus' );
+	// Categories come from inc/catalogue.php — the slugs gate the CBD and THC
+	// notices, so the theme and the provisioner must agree on them.
+	cofifi_seed_categories();
+	WP_CLI::log( '  categories     ' . implode( ', ', array_keys( cofifi_product_categories() ) ) );
 } else {
 	WP_CLI::warning( 'WooCommerce is not active — skipping shop settings, categories and products.' );
 }
@@ -293,167 +280,23 @@ if ( ! $skip_menus ) {
 /* -------------------------------------------------------------------------
  * 6. Sample products
  *
- * PRICES AND BATCH NUMBERS BELOW ARE SAMPLE VALUES. They exist so the shop is
+ * The catalogue itself lives in inc/catalogue.php so the theme's own bootstrap
+ * and this provisioner can never drift. Names, weights and cannabinoid
+ * strengths there are taken off the packaging.
+ *
+ * PRICES AND BATCH NUMBERS ARE SAMPLE VALUES. They exist so the shop is
  * walkable end to end on a fresh install. Replace them before launch.
  * ---------------------------------------------------------------------- */
 
 if ( $has_woo && ! $skip_products ) {
+	$counts = cofifi_seed_products();
 
-	/**
-	 * Attach a theme asset to a product as its featured image, once.
-	 *
-	 * @param int    $product_id Product ID.
-	 * @param string $file       File name inside the theme's assets/img.
-	 */
-	$attach_image = function ( $product_id, $file ) {
-		if ( has_post_thumbnail( $product_id ) ) {
-			return;
-		}
-
-		$source = get_template_directory() . '/assets/img/' . $file;
-
-		if ( ! file_exists( $source ) ) {
-			WP_CLI::warning( 'Image not found: ' . $file );
-			return;
-		}
-
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		$tmp = wp_tempnam( $file );
-
-		if ( ! $tmp || ! copy( $source, $tmp ) ) {
-			WP_CLI::warning( 'Could not stage image: ' . $file );
-			return;
-		}
-
-		$attachment_id = media_handle_sideload(
-			array(
-				'name'     => $file,
-				'tmp_name' => $tmp,
-			),
-			$product_id
-		);
-
-		if ( is_wp_error( $attachment_id ) ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-			@unlink( $tmp );
-			WP_CLI::warning( 'Could not attach image ' . $file . ': ' . $attachment_id->get_error_message() );
-			return;
-		}
-
-		set_post_thumbnail( $product_id, $attachment_id );
-	};
-
-	$seed = array(
-		array(
-			'sku'        => 'COF-COFFEE-250',
-			'name'       => 'Cofifi Coffee',
-			'price'      => '265.00',
-			'image'      => 'prod-coffee-sq.webp',
-			'cats'       => array( 'coffee' ),
-			'featured'   => false,
-			'short'      => 'Creamy, smooth and low in acidity. The everyday bag — 100% Ethiopian, pan-roasted the traditional way.',
-			'long'       => "100% Ethiopian beans, roasted by women in the traditional way and packed in small batches.\n\nCreamy, smooth and low in acidity — the bag we hand people who say they do not like black coffee.",
-			'weight'     => '0.25',
-			'attributes' => array(
-				'Origin' => '100% Ethiopian',
-				'Roast'  => 'Traditional pan-roast, medium',
-				'Weight' => '250 g',
-			),
-		),
-		array(
-			'sku'        => 'COF-CBD-250',
-			'name'       => 'Cofifi Coffee CBD+',
-			'price'      => '395.00',
-			'image'      => 'prod-cbd-sq.webp',
-			'cats'       => array( 'coffee', 'cbd', 'cbd-plus' ),
-			'featured'   => true,
-			'short'      => 'The same Ethiopian roast with 150 mg of broad-spectrum CBD. Under 0.3% THC, third-party tested.',
-			'long'       => "Our everyday Ethiopian roast with 150 mg of broad-spectrum CBD folded into the bag.\n\nCreamy, smooth and low in acidity — the cup tastes the same.",
-			'weight'     => '0.25',
-			'attributes' => array(
-				'Origin' => '100% Ethiopian',
-				'Roast'  => 'Traditional pan-roast, medium',
-				'Weight' => '250 g',
-				'CBD'    => '150 mg broad spectrum',
-				'THC'    => 'Less than 0.3%',
-				'Batch'  => '[batch number]',
-			),
-		),
-		array(
-			'sku'        => 'COF-OIL-30',
-			'name'       => 'Cofifi CBD Oil — Focus',
-			'price'      => '620.00',
-			'image'      => 'oil-white.jpg',
-			'cats'       => array( 'cbd', 'cbd-oil' ),
-			'featured'   => false,
-			'short'      => 'Broad-spectrum extract, 150 mg in 30 ml, with a graduated dropper. Contains less than 0.3% THC.',
-			'long'       => "Broad-spectrum extract in a 30 ml amber bottle, with a graduated dropper so a dose is a measurement rather than a squeeze.\n\nEvery batch is tested by an independent laboratory and the certificate is published against the batch number on the label.",
-			'weight'     => '0.05',
-			'attributes' => array(
-				'CBD'   => '150 mg broad spectrum',
-				'THC'   => 'Less than 0.3%',
-				'Size'  => '30 ml / 1 fl oz',
-				'Batch' => '[batch number]',
-			),
-		),
-	);
-
-	$created = 0;
-
-	foreach ( $seed as $item ) {
-		if ( wc_get_product_id_by_sku( $item['sku'] ) ) {
-			continue;
-		}
-
-		$product = new WC_Product_Simple();
-		$product->set_name( $item['name'] );
-		$product->set_sku( $item['sku'] );
-		$product->set_status( 'publish' );
-		$product->set_catalog_visibility( 'visible' );
-		$product->set_regular_price( $item['price'] );
-		$product->set_short_description( $item['short'] );
-		$product->set_description( $item['long'] );
-		$product->set_weight( $item['weight'] );
-		$product->set_featured( $item['featured'] );
-		$product->set_manage_stock( true );
-		$product->set_stock_quantity( 40 );
-
-		$term_ids = array();
-		foreach ( $item['cats'] as $slug ) {
-			$term = get_term_by( 'slug', $slug, 'product_cat' );
-			if ( $term ) {
-				$term_ids[] = $term->term_id;
-			}
-		}
-		$product->set_category_ids( $term_ids );
-
-		$attributes = array();
-		$position   = 0;
-
-		foreach ( $item['attributes'] as $label => $value ) {
-			$attribute = new WC_Product_Attribute();
-			$attribute->set_name( $label );
-			$attribute->set_options( array( $value ) );
-			$attribute->set_position( $position++ );
-			$attribute->set_visible( true );
-			$attribute->set_variation( false );
-			$attributes[] = $attribute;
-		}
-		$product->set_attributes( $attributes );
-
-		$product_id = $product->save();
-
-		// Marker so these can be found and cleaned up later.
-		update_post_meta( $product_id, '_cofifi_seeded', '1' );
-
-		$attach_image( $product_id, $item['image'] );
-		++$created;
-	}
-
-	WP_CLI::log( '  products       ' . $created . ' created, ' . ( count( $seed ) - $created ) . ' already present' );
+	WP_CLI::log( sprintf(
+		'  products       %d created, %d updated, %d left alone',
+		$counts['created'],
+		$counts['updated'],
+		$counts['skipped']
+	) );
 }
 
 /* -------------------------------------------------------------------------

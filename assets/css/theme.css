@@ -1552,3 +1552,14 @@ body.lb-open { overflow: hidden; }
 	.lb__frame,
 	.lb__scrim { animation: none; }
 }
+
+/* --- Rasta Roast band + the age tag ------------------------------------- */
+
+.tag--age {
+	border-color: #6a2b2b;
+	color: #e0a5a5;
+	background: rgba(106, 43, 43, .16);
+}
+.rasta .split__media img { filter: saturate(1.02); }
+/* A legal notice never sits in the dimmest colour on the page. */
+.rasta .legal { color: var(--muted); }

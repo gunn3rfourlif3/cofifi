@@ -51,6 +51,7 @@ cofifi/
 │   ├── enqueue.php            Styles, scripts, font preload
 │   ├── template-tags.php      Inline SVG icons and helpers
 │   ├── gallery.php            Photo manifest, tile + lightbox markup
+│   ├── catalogue.php          Categories and seed products — the single source
 │   ├── bootstrap.php          One-shot content bootstrap (see Gallery)
 │   └── woocommerce.php        Woo supports and hooks
 ├── header.php  footer.php
@@ -121,17 +122,64 @@ Not optional.
 - Publish the certificate of analysis against the batch number.
 - Have a person with legal responsibility read the CBD copy before launch. Nothing here has been legally reviewed.
 
-### Unresolved: the labels and the copy disagree
+### Two notices, not one
 
-The product photography shows labels reading **THC 750mg** and **THC 150mg**, and a
-**Rasta Roast / Mada Kush** sub-brand that is not in the catalogue. The site states
-**“Contains less than 0.3% THC”** in the utility bar, the hero trust row, the CBD band and two
-product descriptions. Both cannot be true of the same product.
+`cofifi_compliance_line( $kind )` returns one of three lines:
 
-Nothing here resolves it. The photographs are used as shot and the copy is unchanged, so the
-Coffee CBD+ product page currently shows a bag labelled 750 mg THC beside a claim of under
-0.3%. Somebody with legal responsibility has to decide which is correct; the other one has to
-change. Treat this as blocking for launch, not as a design note.
+| Kind | Where | What it says |
+|---|---|---|
+| `general` | The footer, every page | No THC figure at all — the range runs from none to 750 mg, so no single number is true sitewide |
+| `cbd` | Products in `cbd`, `cbd-oil`, `cbd-plus` | Food supplement, less than 0.3% THC, 18+ |
+| `thc` | Products in `thc` or `rasta-roast` | Contains THC, strictly 18+, do not drive, keep from children, edibles take up to two hours |
+
+THC outranks CBD: a bag in both gets the stronger notice. The gate is in
+`cofifi_product_compliance_note()` and keys off the **category slugs** — rename `thc` or
+`rasta-roast` and a legal notice disappears from a product page with no other symptom.
+
+The old sitewide claim “Contains less than 0.3% THC” was seeded into the Customizer as a theme
+mod. `inc/bootstrap.php` retires it, replacing only that exact string. It is false of the
+infused coffees and must not come back above every page. It is still correct on the **CBD oil**,
+where it is stated product by product.
+
+### Still to do before launch
+
+- **There is no age gate.** Every THC product page says 18+, and nothing enforces it.
+- Nothing here has been checked against South African law on the sale of THC-containing food.
+  Names, weights and strengths are transcribed from the packaging; whether they may be sold and
+  shipped this way is not a question this theme answers.
+
+## The catalogue
+
+`inc/catalogue.php` is the single source for product categories and seed products.
+`setup/provision.php` seeds a new install from it; `inc/bootstrap.php` brings a running install
+up to date from the same data, so the two cannot drift.
+
+**Every figure in it is transcribed from the packaging**, not invented:
+
+| SKU | Name | Weight | Cannabinoids |
+|---|---|---|---|
+| `COF-COFFEE-250` | Cofifi Coffee | 250 g | none |
+| `COF-CBD-THC150-250` | Cofifi CBD + Coffee — THC 150 mg | 250 g | CBD + 150 mg THC |
+| `COF-CBD-THC750-250` | Cofifi CBD + Coffee — THC 750 mg | 250 g | CBD + 750 mg THC |
+| `RR-MK-THC500-150` | Rasta Roast Mada Kush Coffee — THC 500 mg | 150 g | 500 mg THC |
+| `COF-OIL-30` | Cofifi CBD Oil — Focus | 30 ml | 150 mg CBD, under 0.3% THC |
+
+The CBD + Coffee bags also carry “Handroasted in SA · 100% Ethiopian · creamy, smooth, no
+acidity” and “Manufactured according to SAHPRA & MCC standards”. Rasta Roast carries “hand
+roasted & infused with love by black families”, “lab tested” and an 18+ mark. All of that is in
+the product copy and attributes.
+
+`COF-CBD-250` (the old “Cofifi Coffee CBD+”) became `COF-CBD-THC150-250`. The seeder's
+`renames` key carries the existing product across rather than leaving a duplicate, so the post,
+its URL and any orders against it survive.
+
+Seeding only ever touches products carrying `_cofifi_seeded`, and never deletes. Price and stock
+are set on creation only — once the shop is live, those are the shop's business.
+
+**The label small print is AI-garbled.** The headline elements are clean, but the body copy on
+the bags reads “AFIO COFFEE & TIEATE CO.”, “HANDRRSTED IH SK 10D% ETHI0PIAH”, “SAHPSA & MCL
+standards”. Reshoot or re-artwork before any of it is printed for real. The site's own copy uses
+the corrected wording.
 
 ## Placeholders and sample data
 

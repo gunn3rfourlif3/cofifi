@@ -75,7 +75,9 @@ function cofifi_breadcrumb_args( $args ) {
 add_filter( 'woocommerce_breadcrumb_defaults', 'cofifi_breadcrumb_args' );
 
 /**
- * The compliance line under the add-to-cart form on CBD products.
+ * The compliance line under the add-to-cart form.
+ *
+ * THC outranks CBD — a bag carrying both gets the stronger notice.
  *
  * A product counts as CBD if it is in the `cbd` product category or carries the
  * `cbd` tag. Keep that taxonomy in place — the disclaimer is a legal
@@ -88,16 +90,20 @@ function cofifi_product_compliance_note() {
 		return;
 	}
 
-	$is_cbd = has_term( array( 'cbd', 'cbd-oil', 'cbd-plus' ), 'product_cat', $product->get_id() )
-		|| has_term( array( 'cbd' ), 'product_tag', $product->get_id() );
+	$id = $product->get_id();
 
-	if ( ! $is_cbd ) {
+	// THC outranks CBD: a bag that carries both gets the stronger notice.
+	if ( has_term( array( 'thc', 'rasta-roast' ), 'product_cat', $id ) || has_term( array( 'thc' ), 'product_tag', $id ) ) {
+		$kind = 'thc';
+	} elseif ( has_term( array( 'cbd', 'cbd-oil', 'cbd-plus' ), 'product_cat', $id ) || has_term( array( 'cbd' ), 'product_tag', $id ) ) {
+		$kind = 'cbd';
+	} else {
 		return;
 	}
 
 	printf(
 		'<p class="legal pdp__compliance">%s</p>',
-		esc_html( cofifi_compliance_line() )
+		esc_html( cofifi_compliance_line( $kind ) )
 	);
 }
 add_action( 'woocommerce_after_add_to_cart_form', 'cofifi_product_compliance_note', 20 );

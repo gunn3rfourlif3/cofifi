@@ -73,12 +73,41 @@ function cofifi_img( $file ) {
 }
 
 /**
- * The compliance line that must appear wherever CBD products are shown.
+ * The compliance line for a context.
  *
+ * The sitewide line must be true of every product in the shop, so it states no
+ * THC figure — the range runs from none at all to 750 mg a bag.
+ *
+ * @param string $kind One of general, cbd, thc.
  * @return string
  */
-function cofifi_compliance_line() {
-	return __( 'CBD products are sold as food supplements and are not intended to diagnose, treat, cure or prevent any disease. Contains less than 0.3% THC. Not for use by anyone under 18, pregnant or breastfeeding.', 'cofifi' );
+function cofifi_compliance_line( $kind = 'general' ) {
+	switch ( $kind ) {
+
+		// Products carrying THC — the infused coffees. Strongest notice.
+		case 'thc':
+			$line = __( 'Contains THC. Strictly 18+ — not for sale to anyone under 18, and not for use by anyone who is pregnant or breastfeeding. Keep out of reach of children. Do not drive or operate machinery after use. Edible cannabinoids can take up to two hours to be felt, so measure a small serving and wait before making another. Not intended to diagnose, treat, cure or prevent any disease.', 'cofifi' );
+			break;
+
+		// CBD without THC above the trace limit — the oil.
+		case 'cbd':
+			$line = __( 'Sold as a food supplement and not intended to diagnose, treat, cure or prevent any disease. Contains less than 0.3% THC. Not for anyone under 18, pregnant or breastfeeding.', 'cofifi' );
+			break;
+
+		// Sitewide. Must be true of every product in the shop, so it states no
+		// THC figure at all — the range runs from none to 750 mg.
+		default:
+			$line = __( 'Cofifi sells food products. Nothing here is intended to diagnose, treat, cure or prevent any disease. Products containing CBD or THC are not for sale to anyone under 18, and not for use by anyone who is pregnant or breastfeeding.', 'cofifi' );
+			break;
+	}
+
+	/**
+	 * Filter a compliance line.
+	 *
+	 * @param string $line The line.
+	 * @param string $kind One of general, cbd, thc.
+	 */
+	return apply_filters( 'cofifi_compliance_line', $line, $kind );
 }
 
 /**
