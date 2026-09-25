@@ -1,0 +1,14 @@
+# This folder sits inside the theme, which is inside the web root, and it holds
+# .env — the database password. Nothing in here may ever be served.
+#
+# Belt and braces: the nginx vhost also 404s this path, and that rule is the one
+# that actually protects you, because it does not depend on AllowOverride being
+# on inside the container.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

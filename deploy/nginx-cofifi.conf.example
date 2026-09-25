@@ -12,6 +12,19 @@ server {
     # Shoppers upload nothing, but the admin uploads product photography.
     client_max_body_size 64m;
 
+    # The theme repo is mounted into the web root, and it carries deploy/ and
+    # setup/ — which hold .env, the database password and the provisioner.
+    # This rule is what actually keeps them unreachable; the .htaccess files in
+    # those folders are only a second line.
+    location ~ ^/wp-content/themes/cofifi/(deploy|setup)/ {
+        return 404;
+    }
+
+    # Nothing should ever fetch a dotfile.
+    location ~ /\.(?!well-known) {
+        return 404;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:8081;
         proxy_http_version 1.1;

@@ -33,6 +33,7 @@ cp .env.example .env
 # Fill in DB_PASSWORD, DB_ROOT_PASSWORD, ADMIN_EMAIL. Leave MAINTENANCE=true.
 # Generate passwords rather than inventing them:  openssl rand -base64 24
 nano .env
+chmod 600 .env
 
 ./first-run.sh
 ```
@@ -42,6 +43,26 @@ the theme, runs `provision.php` and prints the admin password **once** if you
 did not set one. Save it there and then.
 
 It is idempotent — if it fails halfway, fix the cause and run it again.
+
+### A word about this folder
+
+The theme repo is mounted into the web root, and `deploy/` travels with it — so
+`.env`, with your database password, is sitting inside a folder the web server
+can reach. Two things stop it being served:
+
+- the `location ~ ^/wp-content/themes/cofifi/(deploy|setup)/` rule in the vhost
+  below, which is the one that actually protects you;
+- `.htaccess` files in `deploy/` and `setup/`, as a second line for anyone who
+  fronts this differently.
+
+**After nginx is up, check it yourself** — do not take my word for it:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://cofifi.com/wp-content/themes/cofifi/deploy/.env
+```
+
+That must print `404`. If it prints `200`, stop and fix the vhost before you
+point DNS at this box.
 
 ### Point the proxy at it
 
