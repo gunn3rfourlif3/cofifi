@@ -1,15 +1,44 @@
-# COFiFi — one container stack per brand, fronted by whatever reverse proxy the
-# VPS already runs. WordPress binds to 127.0.0.1 only: nothing here is exposed
-# to the internet directly, the proxy terminates TLS and forwards.
+# COFiFi — one self-contained stack, designed to sit on a VPS that is already
+# busy and disturb nothing on it.
 #
-# Copy .env.example to .env and fill it in before the first `docker compose up`.
+# What it touches:
+#   - two containers, two named volumes and one bridge network, all prefixed
+#     "cofifi" by the `name:` key below
+#   - one loopback port (HTTP_PORT). Nothing binds a public interface.
+#
+# What it never touches: ports 80 and 443, the host's nginx, any other
+# project's containers, volumes or networks, and the host filesystem outside
+# this folder.
+#
+# Both services are capped on memory and have rotating logs, so a runaway
+# query or a flood of errors here cannot starve or fill the box and take your
+# other sites down with it.
+#
+# Run ./preflight.sh first. Copy .env.example to .env and fill it in.
 
 name: cofifi
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   db:
     image: mariadb:11
     restart: unless-stopped
+    # 384MB hard cap. InnoDB is told to stay well under it rather than sizing
+    # its buffer pool from the host's total RAM, which is what it would
+    # otherwise do — and on a shared box that number is a lie.
+    command: >
+      --innodb-buffer-pool-size=128M
+      --max-connections=60
+      --performance-schema=OFF
+    mem_limit: 384m
+    memswap_limit: 384m
+    pids_limit: 200
+    logging: *logging
     environment:
       MARIADB_DATABASE: ${DB_NAME}
       MARIADB_USER: ${DB_USER}
@@ -29,8 +58,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    mem_limit: 384m
+    memswap_limit: 512m
+    pids_limit: 200
+    logging: *logging
     ports:
-      # Loopback only. The host's nginx/Traefik/Caddy proxies to this.
+      # Loopback ONLY. The colon-separated 127.0.0.1 prefix is the whole point:
+      # without it Docker writes an iptables rule that exposes this to the
+      # internet and bypasses your firewall. Do not remove it.
       - "127.0.0.1:${HTTP_PORT}:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
@@ -60,6 +95,39 @@ services:
       # The theme is this git repo, checked out on the host. Deploying is a pull.
       - ../:/var/www/html/wp-content/themes/cofifi:ro
 
+    # ----------------------------------------------------------------------
+    # If a CONTAINER already owns 80/443 — Traefik, or nginx-proxy — then the
+    # loopback port above is not how traffic reaches this. Delete the `ports:`
+    # block, join the proxy's network, and uncomment ONE of these.
+    # preflight.sh tells you which (if either) applies.
+    # ----------------------------------------------------------------------
+    #
+    # Traefik:
+    # labels:
+    #   traefik.enable: "true"
+    #   traefik.docker.network: "<the proxy's network>"
+    #   traefik.http.routers.cofifi.rule: "Host(`cofifi.com`) || Host(`www.cofifi.com`)"
+    #   traefik.http.routers.cofifi.entrypoints: "websecure"
+    #   traefik.http.routers.cofifi.tls.certresolver: "<your resolver>"
+    #   traefik.http.services.cofifi.loadbalancer.server.port: "80"
+    #
+    # nginx-proxy + acme-companion:
+    # environment:
+    #   VIRTUAL_HOST: cofifi.com,www.cofifi.com
+    #   VIRTUAL_PORT: 80
+    #   LETSENCRYPT_HOST: cofifi.com,www.cofifi.com
+    #   LETSENCRYPT_EMAIL: hello@cofifi.com
+    #
+    # networks:
+    #   - default
+    #   - proxy
+    #
+    # ...and at the bottom of the file:
+    # networks:
+    #   proxy:
+    #     external: true
+    #     name: <the proxy's network>
+
   # Not a long-running service — `docker compose run --rm cli wp <command>`.
   cli:
     image: wordpress:cli-php8.3
@@ -68,6 +136,8 @@ services:
       db:
         condition: service_healthy
     user: "33:33"
+    mem_limit: 256m
+    logging: *logging
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_NAME: ${DB_NAME}

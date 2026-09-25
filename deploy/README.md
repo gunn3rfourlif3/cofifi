@@ -12,12 +12,37 @@ Customizer setting — so a database restore, a half-finished import or someone
 clicking the wrong checkbox cannot open the shop by accident. Opening it is a
 deliberate, separate act: `./open-shop.sh`.
 
+## This box is not empty
+
+Other projects are already live here, so before anything is created:
+
+```bash
+./preflight.sh
+```
+
+It is **read-only** — it starts nothing, writes nothing, and you can run it
+today, repeatedly, long before you intend to install. It checks the port, name
+clashes with existing containers, volumes and networks, what actually owns
+80/443, whether cofifi.com is already in a vhost, free RAM, swap and disk. It
+prints what it finds and stops at blockers. `first-run.sh` refuses to start
+until it passes.
+
+**[BLAST-RADIUS.md](BLAST-RADIUS.md)** is the companion: exactly what this
+stack creates, what it never goes near, what it is capped at, the two things
+that could still bite, and how to remove it completely. Read that before you
+run anything — it is short, and it is the honest version.
+
+The short form: two containers capped at 768 MB between them with rotating
+logs, one loopback port, its own network and volumes all namespaced `cofifi`.
+It never binds 80 or 443, and no script here reaches outside the `cofifi`
+compose project.
+
 ## What has to be on the VPS already
 
 | | Why |
 |---|---|
 | Docker + Compose v2 | the stack |
-| A reverse proxy on :80/:443 | you already have one — Buddhapets is behind it |
+| A reverse proxy on :80/:443 | you already have one — Buddhapets is behind it. `preflight.sh` identifies which, because the vhost below assumes host nginx and that is not the only option |
 | certbot, or whatever issues your certs | TLS |
 | A free loopback port | `HTTP_PORT`; nothing binds to a public interface here |
 
@@ -35,7 +60,8 @@ cp .env.example .env
 nano .env
 chmod 600 .env
 
-./first-run.sh
+./preflight.sh      # read-only; read what it says
+./first-run.sh      # refuses to run until preflight passes
 ```
 
 `first-run.sh` brings the stack up, installs WordPress and WooCommerce, activates
@@ -154,6 +180,18 @@ Addresses from the holding page land in **Tools → COFiFi waiting list**, with 
 CSV download. If you would rather they went straight to a list provider, filter
 `cofifi_newsletter_action` to your provider's form endpoint and the form will
 post there instead — nothing is stored locally in that case.
+
+## Removing it
+
+```bash
+./remove.sh               # containers and network; data volumes kept
+./remove.sh --with-data   # everything, not recoverable
+```
+
+Both are scoped to the `cofifi` compose project by name. Nothing here runs
+`docker system prune` or any other command that could reach another project —
+that is deliberate, and it is why removal is a script rather than a paragraph
+telling you which things to stop.
 
 ## Backups
 

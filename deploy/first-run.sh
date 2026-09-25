@@ -2,12 +2,27 @@
 # First run only. Installs WordPress and WooCommerce into the volume and
 # provisions the shop. Idempotent — every step checks before it acts, so a
 # re-run after a failure picks up where it stopped.
+#
+# Refuses to start until preflight.sh is happy, because this box is not empty.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 [ -f .env ] || { echo "No .env — copy .env.example and fill it in."; exit 1; }
-set -a; . ./.env; set +a
 
+if [ "${1:-}" = "--skip-preflight" ]; then
+  echo "!! Skipping the preflight check at your own risk."
+  shift
+else
+  echo "==> preflight (read-only)"
+  ./preflight.sh || {
+    echo
+    echo "Preflight found a blocker. Fix it, or re-run with --skip-preflight if"
+    echo "you have read it and disagree. Nothing has been created."
+    exit 1
+  }
+fi
+
+set -a; . ./.env; set +a
 : "${SITE_URL:?}" "${ADMIN_USER:?}" "${ADMIN_EMAIL:?}"
 
 wp() { docker compose run --rm -T cli wp --path=/var/www/html "$@"; }
@@ -60,7 +75,8 @@ wp rewrite structure '/%postname%/' --hard || true
 wp rewrite flush --hard || true
 
 echo
-echo "Done."
-echo "  Site:    $SITE_URL"
-echo "  Closed:  MAINTENANCE=${MAINTENANCE:-true} in .env"
-echo "  Preview: $(wp eval 'echo cofifi_preview_url();' 2>/dev/null || echo '(run ./preview-link.sh)')"
+echo "Done. Nothing outside the 'cofifi' compose project was touched."
+echo "  Site:    $SITE_URL  (not reachable until the proxy and DNS are set up)"
+echo "  Local:   curl -I http://127.0.0.1:${HTTP_PORT}/   should answer 503"
+echo "  Closed:  MAINTENANCE=${MAINTENANCE:-true}"
+echo "  Preview: ./preview-link.sh"
