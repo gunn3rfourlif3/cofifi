@@ -48,11 +48,26 @@ compose project.
 
 ## First run
 
+Clone it wherever your other projects live — check first, and match them rather
+than following the path in this file:
+
 ```bash
 ssh you@your-vps
-sudo mkdir -p /srv/cofifi && sudo chown "$USER" /srv/cofifi
-git clone https://github.com/gunn3rfourlif3/cofifi.git /srv/cofifi
-cd /srv/cofifi/deploy
+docker compose ls                      # what is already running, and from where
+ls -d ~/*/ /srv/*/ /opt/*/ 2>/dev/null
+```
+
+Your home directory needs no root at all, and the only thing that reads the path
+is a Docker bind mount, so it is as good as anywhere:
+
+```bash
+git clone https://github.com/gunn3rfourlif3/cofifi.git ~/cofifi
+cd ~/cofifi/deploy
+```
+
+For `/srv` instead, make it yours first — `sudo mkdir -p /srv/cofifi && sudo chown "$USER" /srv/cofifi` — then clone into it.
+
+```bash
 
 cp .env.example .env
 # Fill in DB_PASSWORD, DB_ROOT_PASSWORD, ADMIN_EMAIL. Leave MAINTENANCE=true.
