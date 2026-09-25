@@ -17,6 +17,7 @@ require_once COFIFI_DIR . '/inc/template-tags.php';
 require_once COFIFI_DIR . '/inc/gallery.php';
 require_once COFIFI_DIR . '/inc/catalogue.php';
 require_once COFIFI_DIR . '/inc/bootstrap.php';
+require_once COFIFI_DIR . '/inc/maintenance.php';
 
 if ( class_exists( 'WooCommerce' ) ) {
 	require_once COFIFI_DIR . '/inc/woocommerce.php';

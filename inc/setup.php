@@ -93,6 +93,7 @@ function cofifi_option( $key ) {
 		 * "fix" the capitals here — change it only against the registration.
 		 */
 		'legal_name'     => 'CoFiFi Roastery',
+		'maintenance_line' => __( 'Opening [soon].', 'cofifi' ),
 		'utility_1'      => __( 'Roasted by women, the traditional way', 'cofifi' ),
 		'utility_2'      => __( 'Cannabis range — strictly 18+', 'cofifi' ),
 	);
@@ -125,10 +126,27 @@ function cofifi_customize_register( $wp_customize ) {
 		'address_line_1' => __( 'Address line 1', 'cofifi' ),
 		'address_line_2' => __( 'Address line 2', 'cofifi' ),
 		'email'          => __( 'Contact email', 'cofifi' ),
+		'maintenance_line' => __( 'Launch line (shown on the holding page)', 'cofifi' ),
 		'legal_name'     => __( 'Registered name (footer copyright)', 'cofifi' ),
 		'utility_1'      => __( 'Utility bar — message 1', 'cofifi' ),
 		'utility_2'      => __( 'Utility bar — message 2', 'cofifi' ),
 	);
+
+	$wp_customize->add_setting( 'cofifi_maintenance', array(
+		'default'           => false,
+		'sanitize_callback' => 'wp_validate_boolean',
+		'transport'         => 'refresh',
+	) );
+	$wp_customize->add_control( 'cofifi_maintenance', array(
+		'label'       => __( 'Close the shop (maintenance mode)', 'cofifi' ),
+		'description' => sprintf(
+			/* translators: %s: the preview URL. */
+			__( 'Visitors get a holding page and a 503. You and anyone holding this link still see the shop: %s', 'cofifi' ),
+			'<br><code style="word-break:break-all">' . esc_url( cofifi_preview_url() ) . '</code>'
+		),
+		'section'     => 'cofifi_brand',
+		'type'        => 'checkbox',
+	) );
 
 	foreach ( $fields as $key => $label ) {
 		$wp_customize->add_setting( 'cofifi_' . $key, array(

@@ -69,12 +69,14 @@ cofifi/
 │   ├── template-tags.php      Inline SVG icons and helpers
 │   ├── gallery.php            Photo manifest, tile + lightbox markup
 │   ├── catalogue.php          Categories and seed products — the single source
+│   ├── maintenance.php        The closed-shop gate and the waiting list
 │   ├── bootstrap.php          One-shot content bootstrap (see Gallery)
 │   └── woocommerce.php        Woo supports and hooks
 ├── header.php  footer.php
 ├── front-page.php             Homepage
 ├── index.php  page.php  single.php  404.php  searchform.php
 ├── page-gallery.php           Template Name: Gallery
+├── deploy/                    Container stack, scripts and the go-live runbook
 ├── template-parts/
 │   ├── home/                  One file per homepage section
 │   └── components/            product-card
@@ -223,14 +225,57 @@ one.
 
 Served at `http://localhost/cofifi` via an Apache alias — see [setup/README.md](setup/README.md).
 
+## Maintenance mode — live, but closed
+
+Switch it on in **Customize → COFiFi details → Close the shop**, or force it from
+`wp-config.php`:
+
+```php
+define( 'COFIFI_MAINTENANCE', true );   // or false
+```
+
+The constant wins. That is the point of it: a database restore, a botched import
+or a mis-click cannot open the shop, and `deploy/.env` sets it from `MAINTENANCE=`
+so a fresh server is closed from its very first request.
+
+**What happens.** The front end returns **503** with `Retry-After` and
+`X-Robots-Tag: noindex, nofollow`, and renders `template-parts/maintenance.php` —
+a whole document with no header, nav or cart. 503 is the right status: it tells
+Google to come back, rather than indexing a holding page as your homepage.
+
+**Who gets through.** Anyone signed in who `can( 'edit_posts' )` — administrators,
+editors, shop managers. Plus anyone holding the preview link:
+
+```
+https://cofifi.com/?cofifi-preview=<key>
+```
+
+which trades the key for an HttpOnly cookie lasting a week and then redirects to
+strip the key out of the URL, the referrer and the browser history. The key is
+generated once and lives in the theme mods; the Customizer shows the full link.
+**It is a password** — anyone with it sees the whole shop.
+
+The gate hangs off `template_redirect`, which only fires on a front-end page
+load. wp-admin, wp-login, admin-ajax, the REST API, WP-Cron and WooCommerce's
+`wc-api` payment callbacks never reach it and are never blocked.
+
+**The waiting list.** The holding page's email field stores addresses in a
+non-autoloaded `cofifi_waitlist` option — deduped, nonce-checked, honeypotted.
+Read and export them at **Tools → COFiFi waiting list**. Filter
+`cofifi_newsletter_action` to a list provider's endpoint and the form posts
+straight there instead, storing nothing locally.
+
 ## Deployment
 
 The site runs in its own container on the VPS. This repo is pulled into `wp-content/themes/cofifi` on the server; core, plugins, uploads and the database are managed there, not here.
 
-**cofifi.com is registered through Google Workspace**, so DNS lives in the Google admin console,
-not at the host. Going live means pointing the A record (and `www`) at the VPS there — and
-leaving the MX records alone, or Workspace mail stops. Set `SITE_URL=https://cofifi.com` when
-running the installer on the server.
+**[`deploy/`](deploy/README.md) is the runbook** — the container stack, the nginx vhost, the
+DNS moves and the scripts. Read that, not this paragraph, when you actually go live.
+
+The short version: `deploy/first-run.sh` once, point the A record at the VPS from wherever
+`dig +short NS cofifi.com` says DNS lives, **leave the MX records alone** or Workspace mail
+stops, then `certbot`. The shop is closed the whole time; `./open-shop.sh` is a separate,
+deliberate step.
 
 ## Conventions
 

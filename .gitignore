@@ -30,3 +30,7 @@ vendor/
 # Install helpers
 setup/bin/
 setup/.env
+
+# Deployment secrets — never commit the filled-in one
+deploy/.env
+deploy/*.bak

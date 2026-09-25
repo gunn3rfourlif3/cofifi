@@ -1,0 +1,29 @@
+# Host nginx vhost. Put this in /etc/nginx/sites-available/cofifi.com, symlink
+# it into sites-enabled, then `certbot --nginx -d cofifi.com -d www.cofifi.com`
+# — certbot rewrites this file to add the TLS block and the redirect.
+#
+# HTTP_PORT must match .env.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name cofifi.com www.cofifi.com;
+
+    # Shoppers upload nothing, but the admin uploads product photography.
+    client_max_body_size 64m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        # WordPress reads this to know it is on HTTPS. Without it: redirect loop.
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+
+        # Checkout and the admin can both be slow on a small VPS.
+        proxy_read_timeout 300s;
+    }
+}

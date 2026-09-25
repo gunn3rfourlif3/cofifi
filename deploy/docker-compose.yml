@@ -1,0 +1,83 @@
+# COFiFi — one container stack per brand, fronted by whatever reverse proxy the
+# VPS already runs. WordPress binds to 127.0.0.1 only: nothing here is exposed
+# to the internet directly, the proxy terminates TLS and forwards.
+#
+# Copy .env.example to .env and fill it in before the first `docker compose up`.
+
+name: cofifi
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  wordpress:
+    image: wordpress:6-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Loopback only. The host's nginx/Traefik/Caddy proxies to this.
+      - "127.0.0.1:${HTTP_PORT}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: cof_
+      WORDPRESS_CONFIG_EXTRA: |
+        /* Closed to the public until MAINTENANCE=false in .env.
+           A constant beats the Customizer setting, so a database restore or a
+           half-finished import can never leave the shop open by accident. */
+        define( 'COFIFI_MAINTENANCE', ${MAINTENANCE} );
+
+        define( 'WP_HOME', '${SITE_URL}' );
+        define( 'WP_SITEURL', '${SITE_URL}' );
+
+        /* Behind a TLS-terminating proxy WordPress sees plain HTTP and will
+           write http:// URLs and then redirect-loop. Trust the proxy's header. */
+        if ( isset( $$_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === $$_SERVER['HTTP_X_FORWARDED_PROTO'] ) {
+            $$_SERVER['HTTPS'] = 'on';
+        }
+
+        define( 'DISALLOW_FILE_EDIT', true );
+        define( 'WP_AUTO_UPDATE_CORE', 'minor' );
+    volumes:
+      - wp:/var/www/html
+      # The theme is this git repo, checked out on the host. Deploying is a pull.
+      - ../:/var/www/html/wp-content/themes/cofifi:ro
+
+  # Not a long-running service — `docker compose run --rm cli wp <command>`.
+  cli:
+    image: wordpress:cli-php8.3
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: cof_
+    volumes:
+      - wp:/var/www/html
+      - ../:/var/www/html/wp-content/themes/cofifi:ro
+
+volumes:
+  db:
+  wp:
