@@ -112,25 +112,39 @@ backoff and affects nothing else. It succeeds on its own once DNS moves.
 
 ## DNS
 
-```bash
-dig +short NS cofifi.com      # where is DNS actually managed?
-dig +short A  cofifi.com      # 198.185.159.144 = still Squarespace
+Checked, rather than assumed:
+
+```
+NS   cofifi.com  ->  ns-cloud-e1..e4.googledomains.com
 ```
 
-The domain came with Google Workspace, so the nameservers are most likely
-Squarespace's — Google sold Google Domains to Squarespace in 2023 and those
-registrations moved. The Workspace admin console links through to domain
-management: **admin.google.com → Account → Domains → Manage domains**. If `dig`
-says something else, go where it points.
+The zone is hosted on **Google's** nameservers. The A records point at
+Squarespace's web servers, but that is where the site is *served*, not where DNS
+is *edited* — two different things, and easy to conflate.
 
-| Type | Host | Value |
+Edit at **admin.google.com → Account → Domains → Manage domains → DNS**.
+Confirm it is still true before you start: `dig +short NS cofifi.com`.
+
+The VPS is **169.58.46.223** — the address `app.dantalan.co.za`,
+`api.locare.co.za` and `locare.co.za` all resolve to, and the one written in
+PMS03's own Caddyfile comments.
+
+| Record | Currently | Change to |
 |---|---|---|
-| A | `@` | this VPS's IPv4 |
-| A | `www` | this VPS's IPv4 |
+| `@` A | `198.185.159.144`, `.145`, `198.49.23.144`, `.145` | delete all four; one A to `169.58.46.223` |
+| `www` | **CNAME** to `ext-sq.squarespace.com` | **delete the CNAME first**, then an A to `169.58.46.223` |
+| `@` MX | priority 1 `smtp.google.com` | **leave alone** |
 
-**Do not touch the MX records.** They point at Google and they are what makes
-hello@cofifi.com work. Changing an A record does not affect mail; deleting MX
-records does, instantly and silently.
+`www` is the trap: a name cannot hold both a CNAME and an A record, so the
+CNAME has to go before the A will take. Most DNS interfaces reject it with an
+unhelpful error rather than explaining why.
+
+**Do not touch the MX record.** It is what makes hello@cofifi.com work. Changing
+an A record does not affect mail; deleting MX does, instantly and silently.
+
+TTL on those records is **14400 — four hours**, so the old values stay cached
+that long after the change. For a tight cutover, lower the TTL to 300 first,
+wait four hours for the old one to age out, then change the values.
 
 ## Now it is live, and closed
 
