@@ -19,16 +19,17 @@ warn() { printf '  \033[33mcheck\033[0m %s\n' "$*"; WARN=$((WARN+1)); }
 bad()  { printf '  \033[31mSTOP\033[0m  %s\n' "$*"; FAIL=$((FAIL+1)); }
 head_() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 
-PORT="8081"; NAME="cofifi"; DIR="/srv/cofifi"; DOMAIN="cofifi.com"
+NAME="cofifi"; ALIAS="cofifi-wp"; PROXY_NET="deploy_default"
+DIR="$(cd .. && pwd)"; DOMAIN="cofifi.com"
 if [ -f .env ]; then
   # shellcheck disable=SC1091
   set -a; . ./.env; set +a
-  PORT="${HTTP_PORT:-$PORT}"
+  PROXY_NET="${PROXY_NETWORK:-$PROXY_NET}"
   DOMAIN="$(printf '%s' "${SITE_URL:-https://cofifi.com}" | sed -E 's#^https?://##; s#/.*##')"
 fi
 
 printf '\033[1mCOFiFi preflight\033[0m — nothing here writes anything.\n'
-printf 'Checking for: port %s, project "%s", %s, %s\n' "$PORT" "$NAME" "$DIR" "$DOMAIN"
+printf 'Checking: project "%s", alias %s on %s, %s\n' "$NAME" "$ALIAS" "$PROXY_NET" "$DOMAIN"
 
 # ---------------------------------------------------------------- tooling
 head_ "Tooling"
@@ -38,18 +39,35 @@ else bad "docker is not installed"; fi
 if docker compose version >/dev/null 2>&1; then ok "compose v2 ($(docker compose version --short 2>/dev/null))"
 else bad "Compose v2 missing. This stack uses the top-level 'name:' key, which compose v1 ignores — without it every command would act on the wrong project."; fi
 
-# ---------------------------------------------------------------- the port
-head_ "Port $PORT"
-LISTENERS="$( (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null) | grep -E "[:.]$PORT\b" )"
-if [ -n "$LISTENERS" ]; then
-  bad "something already listens on $PORT:"
-  printf '        %s\n' "$LISTENERS"
-  echo   "        Pick a free one and set HTTP_PORT in .env. Free ports nearby:"
-  for p in $(seq 8080 8099); do
-    (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -qE "[:.]$p\b" || printf '          %s\n' "$p"
-  done | head -5
+# -------------------------------------------------- the proxy we plug into
+head_ "Reverse proxy network ($PROXY_NET)"
+if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+  if docker network inspect "$PROXY_NET" >/dev/null 2>&1; then
+    ok "$PROXY_NET exists — we join it, we never create or remove it"
+    ON_NET="$(docker network inspect "$PROXY_NET" --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null)"
+    echo "        already on it: $ON_NET"
+    case "$ON_NET" in
+      *caddy*|*traefik*|*nginx*) ok "a proxy container is on this network" ;;
+      *) warn "no obvious proxy container on $PROXY_NET — check PROXY_NETWORK in .env" ;;
+    esac
+    # An alias clash is silent and vicious: two containers answering to one
+    # name means the proxy reaches whichever DNS feels like answering.
+    if docker ps --format '{{.Names}}' | grep -q "^cofifi-wordpress"; then
+      warn "a cofifi-wordpress container is already running"
+    fi
+    for c in $(docker network inspect "$PROXY_NET" --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null); do
+      if docker inspect "$c" --format "{{range .NetworkSettings.Networks}}{{range .Aliases}}{{.}} {{end}}{{end}}" 2>/dev/null | grep -qw "$ALIAS"; then
+        bad "the alias '$ALIAS' is already taken on $PROXY_NET by $c"
+      fi
+    done
+    [ "$FAIL" -eq 0 ] && ok "alias '$ALIAS' is free"
+  else
+    bad "network $PROXY_NET does not exist. Find the proxy's network:
+          docker inspect <proxy-container> --format '{{range \$k,\$v := .NetworkSettings.Networks}}{{\$k}} {{end}}'
+        then set PROXY_NETWORK in .env."
+  fi
 else
-  ok "$PORT is free"
+  warn "cannot reach the docker daemon — is this user in the docker group?"
 fi
 
 # ------------------------------------------------------------ name clashes
@@ -74,13 +92,6 @@ else
   warn "cannot talk to the docker daemon — run this with the same user that runs docker"
 fi
 
-# -------------------------------------------------------------- the folder
-head_ "Install folder"
-if [ -e "$DIR" ]; then
-  if [ -n "$(ls -A "$DIR" 2>/dev/null)" ]; then warn "$DIR exists and is not empty"
-  else ok "$DIR exists and is empty"; fi
-else ok "$DIR does not exist yet"; fi
-
 # --------------------------------------------------------- who owns 80/443
 head_ "What is already serving the internet"
 FRONT="$( (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null) | grep -E '[:.](80|443)\b' )"
@@ -90,8 +101,8 @@ if [ -n "$FRONT" ]; then
     *nginx*)    ok "host nginx is the front door — use nginx-cofifi.conf.example" ;;
     *apache*|*httpd*) warn "host Apache is the front door — the sample vhost is nginx. Translate it, or put COFiFi behind Apache with mod_proxy." ;;
     *caddy*)    warn "Caddy is the front door — add a block to its Caddyfile instead of the nginx sample (README has one)" ;;
-    *docker*)   warn "a container owns 80/443 — probably Traefik or nginx-proxy. Use the labels in docker-compose.yml instead of the nginx sample, and do NOT run certbot." ;;
-    *)          warn "could not tell what owns 80/443 — identify it before adding a vhost" ;;
+    *docker*)   warn "a container owns 80/443 — see the proxy line below" ;;
+    *)          warn "the owner of 80/443 is inside a container namespace, so ss cannot name it — see the proxy line below" ;;
   esac
 else
   warn "nothing is listening on 80/443. If other sites are live here, they are being served some other way — find out how before you add anything."
@@ -99,14 +110,21 @@ fi
 
 if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
   PROXY="$(docker ps --format '{{.Names}} {{.Image}}' | grep -Ei 'traefik|nginx-proxy|caddy|jwilder|acme' || true)"
-  [ -n "$PROXY" ] && warn "proxy containers running: $(echo "$PROXY" | tr '\n' '; ')"
+  if [ -n "$PROXY" ]; then
+    ok "the front door is a container: $(echo "$PROXY" | tr '\n' '; ')"
+    case "$PROXY" in
+      *caddy*) echo "        Caddy issues and renews its own certificates."
+               echo "        DO NOT run certbot, and do not add an nginx vhost — neither is read here."
+               echo "        Add caddy-cofifi.snippet to the Caddyfile instead (see README)." ;;
+    esac
+  fi
 fi
 
 # ------------------------------------------------------- domain already used
 head_ "Is $DOMAIN already configured here"
-HITS="$(grep -rl "$DOMAIN" /etc/nginx /etc/apache2 /etc/caddy 2>/dev/null || true)"
+HITS="$(grep -rl "$DOMAIN" /etc/nginx /etc/apache2 /etc/caddy $HOME/*/Caddyfile $HOME/*/*/Caddyfile 2>/dev/null || true)"
 if [ -n "$HITS" ]; then warn "$DOMAIN already appears in: $(echo "$HITS" | tr '\n' ' ')"
-else ok "no existing vhost mentions $DOMAIN"; fi
+else ok "no existing vhost or Caddyfile mentions $DOMAIN"; fi
 
 if [ -d /etc/letsencrypt/live ]; then
   ls /etc/letsencrypt/live 2>/dev/null | grep -q "$DOMAIN" \

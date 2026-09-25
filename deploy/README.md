@@ -14,64 +14,53 @@ deliberate, separate act: `./open-shop.sh`.
 
 ## This box is not empty
 
-Other projects are already live here, so before anything is created:
+Five projects share it. Before anything is created:
 
 ```bash
 ./preflight.sh
 ```
 
-It is **read-only** — it starts nothing, writes nothing, and you can run it
-today, repeatedly, long before you intend to install. It checks the port, name
-clashes with existing containers, volumes and networks, what actually owns
-80/443, whether cofifi.com is already in a vhost, free RAM, swap and disk. It
-prints what it finds and stops at blockers. `first-run.sh` refuses to start
-until it passes.
+Read-only. Starts nothing, writes nothing, safe to run repeatedly long before
+you intend to install. `first-run.sh` refuses to start until it passes.
 
-**[BLAST-RADIUS.md](BLAST-RADIUS.md)** is the companion: exactly what this
-stack creates, what it never goes near, what it is capped at, the two things
-that could still bite, and how to remove it completely. Read that before you
-run anything — it is short, and it is the honest version.
+**[BLAST-RADIUS.md](BLAST-RADIUS.md)** is the companion: what this creates, what
+it never goes near, what it is capped at, and how to remove it. Short, and the
+honest version.
 
-The short form: two containers capped at 768 MB between them with rotating
-logs, one loopback port, its own network and volumes all namespaced `cofifi`.
-It never binds 80 or 443, and no script here reaches outside the `cofifi`
-compose project.
+## How it attaches
 
-## What has to be on the VPS already
+One Caddy fronts the whole VPS — container `deploy-caddy-1`, part of the PMS03
+compose project, on the docker network `deploy_default`.
 
-| | Why |
-|---|---|
-| Docker + Compose v2 | the stack |
-| A reverse proxy on :80/:443 | you already have one — Buddhapets is behind it. `preflight.sh` identifies which, because the vhost below assumes host nginx and that is not the only option |
-| certbot, or whatever issues your certs | TLS |
-| A free loopback port | `HTTP_PORT`; nothing binds to a public interface here |
+COFiFi **joins that network** under the alias `cofifi-wp`, and Caddy proxies to
+it by name. This is exactly how `buddhapets-wp` is already wired, and it means
+**COFiFi binds no host port at all** — not 80, not 443, not even a loopback
+port. The only route in is through Caddy.
 
-## First run
+Two consequences worth stating plainly:
 
-Clone it wherever your other projects live — check first, and match them rather
-than following the path in this file:
+- **Do not run certbot.** Caddy issues and renews its own certificates. Adding
+  certbot to a box whose certs are container-managed is how you break renewals
+  for every site on it. `nginx-cofifi.conf.example` in this folder is dead
+  weight for this VPS — it is kept only in case a future box is fronted by host
+  nginx instead.
+- `deploy_default` is shared, so COFiFi's container can reach Locare's postgres
+  and redis, and theirs can reach ours. That is already true of BuddhaPets; a
+  docker network is a routing domain, not a security boundary. The database
+  password is the thing keeping them apart, which is why `.env` is `chmod 600`
+  and why `db` stays off the shared network entirely.
 
-```bash
-ssh you@your-vps
-docker compose ls                      # what is already running, and from where
-ls -d ~/*/ /srv/*/ /opt/*/ 2>/dev/null
-```
-
-Your home directory needs no root at all, and the only thing that reads the path
-is a Docker bind mount, so it is as good as anywhere:
+## Install
 
 ```bash
+ssh deploy@your-vps
 git clone https://github.com/gunn3rfourlif3/cofifi.git ~/cofifi
 cd ~/cofifi/deploy
-```
-
-For `/srv` instead, make it yours first — `sudo mkdir -p /srv/cofifi && sudo chown "$USER" /srv/cofifi` — then clone into it.
-
-```bash
 
 cp .env.example .env
-# Fill in DB_PASSWORD, DB_ROOT_PASSWORD, ADMIN_EMAIL. Leave MAINTENANCE=true.
-# Generate passwords rather than inventing them:  openssl rand -base64 24
+# DB_PASSWORD, DB_ROOT_PASSWORD, ADMIN_EMAIL.
+# Generate, don't invent:  openssl rand -base64 24
+# Leave MAINTENANCE=true.
 nano .env
 chmod 600 .env
 
@@ -79,82 +68,88 @@ chmod 600 .env
 ./first-run.sh      # refuses to run until preflight passes
 ```
 
-`first-run.sh` brings the stack up, installs WordPress and WooCommerce, activates
-the theme, runs `provision.php` and prints the admin password **once** if you
-did not set one. Save it there and then.
+`first-run.sh` brings the stack up, installs WordPress and WooCommerce,
+activates the theme, provisions, and prints the admin password **once** if you
+did not set one. Save it there and then. Idempotent — if it fails halfway, fix
+the cause and run it again.
 
-It is idempotent — if it fails halfway, fix the cause and run it again.
+At the end it should report `HTTP/1.1 503` from inside the container. 503 is
+correct: the shop is closed.
 
-### A word about this folder
+## The Caddyfile block
 
-The theme repo is mounted into the web root, and `deploy/` travels with it — so
-`.env`, with your database password, is sitting inside a folder the web server
-can reach. Two things stop it being served:
+`/home/deploy/PMS03/deploy/Caddyfile` opens with:
 
-- the `location ~ ^/wp-content/themes/cofifi/(deploy|setup)/` rule in the vhost
-  below, which is the one that actually protects you;
-- `.htaccess` files in `deploy/` and `setup/`, as a second line for anyone who
-  fronts this differently.
+> ⚠ THIS FILE IS THE SOURCE OF TRUTH. Edit it here and deploy with `git pull`,
+> never directly on the VPS.
 
-**After nginx is up, check it yourself** — do not take my word for it:
+**Follow that.** Copy [`caddy-cofifi.snippet`](caddy-cofifi.snippet) into the
+Caddyfile **in the PMS03 repo**, next to the BuddhaPets block, commit it, and
+pull on the box. Pasting it in on the server is how the BuddhaPets blocks ended
+up invisible to the repo for weeks, one `git checkout` away from taking a live
+site down.
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://cofifi.com/wp-content/themes/cofifi/deploy/.env
-```
-
-That must print `404`. If it prints `200`, stop and fix the vhost before you
-point DNS at this box.
-
-### Point the proxy at it
+Then, on the box:
 
 ```bash
-sudo cp nginx-cofifi.conf.example /etc/nginx/sites-available/cofifi.com
-sudo nano /etc/nginx/sites-available/cofifi.com     # check HTTP_PORT matches .env
-sudo ln -s /etc/nginx/sites-available/cofifi.com /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+cd /home/deploy/PMS03/deploy
+git pull
+
+# Validate BEFORE reloading. A bad Caddyfile that gets loaded takes every site
+# on this box down, not just COFiFi.
+docker compose exec -w /etc/caddy caddy caddy validate --config Caddyfile
+
+# Reload, not restart. Reload is graceful — no dropped connections, no gap for
+# the other four projects.
+docker compose exec -w /etc/caddy caddy caddy reload --config Caddyfile
 ```
 
-Certificates come after DNS, not before — Let's Encrypt has to resolve the
-domain to this box to issue.
+If `validate` complains, stop. Nothing has changed yet at that point.
+
+Caddy will now try to get a certificate for cofifi.com and fail, because DNS
+still points at Squarespace. That is expected and harmless — it retries with
+backoff and affects nothing else. It succeeds on its own once DNS moves.
 
 ## DNS
 
-**Find out where DNS actually is before changing anything:**
-
 ```bash
-dig +short NS cofifi.com
+dig +short NS cofifi.com      # where is DNS actually managed?
+dig +short A  cofifi.com      # 198.185.159.144 = still Squarespace
 ```
 
 The domain came with Google Workspace, so the nameservers are most likely
 Squarespace's — Google sold Google Domains to Squarespace in 2023 and those
-registrations moved across. The Workspace admin console still links through to
-domain management: **admin.google.com → Account → Domains → Manage domains**.
-If `dig` says something else, go wherever it points instead.
-
-At that DNS host:
+registrations moved. The Workspace admin console links through to domain
+management: **admin.google.com → Account → Domains → Manage domains**. If `dig`
+says something else, go where it points.
 
 | Type | Host | Value |
 |---|---|---|
-| A | `@` | your VPS IPv4 |
-| A (or CNAME) | `www` | your VPS IPv4, or `cofifi.com` |
+| A | `@` | this VPS's IPv4 |
+| A | `www` | this VPS's IPv4 |
 
 **Do not touch the MX records.** They point at Google and they are what makes
-hello@cofifi.com work. Changing the A record does not affect mail; deleting MX
-records does, immediately and silently.
-
-Then wait for propagation and issue the certificate:
-
-```bash
-dig +short A cofifi.com            # should return your VPS IP
-sudo certbot --nginx -d cofifi.com -d www.cofifi.com
-```
+hello@cofifi.com work. Changing an A record does not affect mail; deleting MX
+records does, instantly and silently.
 
 ## Now it is live, and closed
 
-Open `https://cofifi.com` in a private window. You should get the holding page,
-and `curl -I https://cofifi.com` should say `HTTP/2 503` with
-`X-Robots-Tag: noindex`. The 503 is deliberate: it tells Google "come back
-later" instead of indexing a holding page as your homepage.
+```bash
+curl -I https://cofifi.com
+```
+
+`HTTP/2 503` with `X-Robots-Tag: noindex` is success. The 503 tells Google to
+come back later instead of indexing a holding page as your homepage.
+
+Then check the thing that would be embarrassing to get wrong:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  https://cofifi.com/wp-content/themes/cofifi/deploy/.env
+```
+
+Must print `404`. If it prints `200`, your database password is on the public
+internet — stop and fix the Caddyfile block before doing anything else.
 
 Get the preview link:
 
@@ -162,11 +157,10 @@ Get the preview link:
 ./preview-link.sh
 ```
 
-That URL opens the real shop for a week, for anyone who has it, with no login.
-It is a password — send it over something private, not a public channel.
+That URL opens the real shop for a week, for anyone who has it, no login. It is
+a password. Send it privately.
 
-Set the launch line the holding page shows in **Customize → COFiFi details →
-Launch line** (e.g. "Opening in March").
+Set what the holding page says in **Customize → COFiFi details → Launch line**.
 
 ## Opening
 
@@ -175,26 +169,19 @@ Launch line** (e.g. "Opening in March").
 ./close-shop.sh     # back to the holding page
 ```
 
-Before you open, walk the shop signed out via the preview link and check the
-things that are still placeholders: prices, `[batch number]`, `[R950]`, the
-address lines. And read **CBD compliance** in the theme README — the THC notices
-are in place but nothing has been through a lawyer.
+Before opening, walk the shop signed out through the preview link and check what
+is still placeholder: prices, `[batch number]`, `[R950]`, the address lines. And
+read **CBD compliance** in the theme README — the THC notices are in place, but
+nothing has been through a lawyer.
 
 ## Deploying a change
 
 ```bash
-cd /srv/cofifi/deploy && ./update.sh
+cd ~/cofifi/deploy && ./update.sh
 ```
 
 Pulls the theme, re-runs provisioning (idempotent, never deletes), flushes and
-restarts PHP so opcache picks up the new files.
-
-## The waiting list
-
-Addresses from the holding page land in **Tools → COFiFi waiting list**, with a
-CSV download. If you would rather they went straight to a list provider, filter
-`cofifi_newsletter_action` to your provider's form endpoint and the form will
-post there instead — nothing is stored locally in that case.
+restarts PHP so opcache picks up the new files. Does not touch Caddy.
 
 ## Removing it
 
@@ -203,13 +190,22 @@ post there instead — nothing is stored locally in that case.
 ./remove.sh --with-data   # everything, not recoverable
 ```
 
-Both are scoped to the `cofifi` compose project by name. Nothing here runs
-`docker system prune` or any other command that could reach another project —
-that is deliberate, and it is why removal is a script rather than a paragraph
-telling you which things to stop.
+Both scoped to the `cofifi` compose project by name. Nothing here runs
+`docker system prune` or anything else that could reach another project — that
+is deliberate, and it is why removal is a script rather than a paragraph telling
+you which things to stop. Remember to remove the Caddyfile block too, in the
+PMS03 repo.
+
+## The waiting list
+
+Addresses from the holding page land in **Tools → COFiFi waiting list**, with a
+CSV download. To send them to a list provider instead, filter
+`cofifi_newsletter_action` to its form endpoint; nothing is stored locally then.
 
 ## Backups
 
-Not set up here, and the stack does not do it for you. Two volumes hold
+**Not set up, and this stack does not do it for you.** Two volumes hold
 everything: `cofifi_db` and `cofifi_wp`. Before you open to the public, get a
-`mysqldump` and an uploads copy onto something that is not this VPS.
+`mysqldump` and an uploads copy onto something that is not this VPS. Four other
+projects share this box; whatever already backs them up is the obvious place to
+add a fifth.

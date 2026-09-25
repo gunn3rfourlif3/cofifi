@@ -10,14 +10,16 @@ projects, and "it should be fine" is not an answer.
 | Containers | `cofifi-db-1`, `cofifi-wordpress-1` | prefixed by the compose project name |
 | Volumes | `cofifi_db`, `cofifi_wp` | |
 | Network | `cofifi_default` | its own bridge, isolated |
-| Listening socket | `127.0.0.1:<HTTP_PORT>` | loopback only — not reachable from outside the box |
-| Files | `/srv/cofifi/` | the git checkout |
-| Files | one nginx vhost, one Let's Encrypt cert | only if you add them, in the DNS step |
+| Network membership | joins `deploy_default` as `cofifi-wp` | Caddy's network; we never create or remove it |
+| Files | `~/cofifi/` | the git checkout |
+| Text | one site block in PMS03's Caddyfile | added in that repo, not on the box |
 
 ## Never touches
 
-- **Ports 80 and 443.** Nothing here binds them. Your existing proxy stays the
-  only thing on the front door.
+- **Any port at all.** Not 80, not 443, not a loopback port. COFiFi is reachable
+  only through Caddy, over the shared docker network.
+- **Caddy's containers, volumes or certificates.** One site block is added to
+  its config file, in the PMS03 repo. `reload`, never `restart`.
 - **Any other container, volume, network or compose project.** Every command in
   every script is scoped to the `cofifi` project by name. There is no
   `docker system prune`, no `docker volume prune`, no bare `docker stop`.
@@ -52,12 +54,15 @@ arrival. `preflight.sh` checks this and refuses below 700 MB. If there is no
 swap it warns, because swap is what turns a spike into slowness instead of a
 dead process.
 
-**Whatever already answers on 80/443.** The nginx vhost assumes host nginx. If
-a container owns the front door (Traefik, nginx-proxy) then editing
-`/etc/nginx` does nothing at best, and running `certbot --nginx` on a box whose
-certificates are managed by a container is a good way to break renewals for
-everything. `preflight.sh` identifies what is actually there;
-`docker-compose.yml` carries label blocks for the container cases.
+**The Caddyfile is shared.** It is the one file COFiFi touches that belongs to
+another project, and a syntax error in it takes down all five sites, not one.
+So: edit it in the PMS03 repo, `caddy validate` before `caddy reload`, and
+reload rather than restart. If validate fails, nothing has changed yet.
+
+**The shared network is not a wall.** `deploy_default` carries Locare's
+postgres and redis. Anything on it can route to anything else on it — that is
+already true of BuddhaPets, and it is why COFiFi's own database stays off that
+network and only the web container joins.
 
 ## Undo
 

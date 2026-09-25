@@ -26,8 +26,8 @@ else
   echo "  Volumes cofifi_db and cofifi_wp are KEPT. Re-run with --with-data to delete them too."
 fi
 echo
-echo "Not touched: the host nginx, its vhosts, certificates, and every other"
-echo "container, volume and network on this box."
+echo "Not touched: Caddy, its config, its certificates, the deploy_default"
+echo "network itself, and every other container and volume on this box."
 echo
 read -r -p "Type 'remove' to continue: " answer
 [ "$answer" = "remove" ] || { echo "Nothing done."; exit 1; }
@@ -41,6 +41,9 @@ fi
 echo
 echo "Done. Still on disk, remove by hand if you want them gone:"
 echo "  this folder and the repo above it"
-echo "  /etc/nginx/sites-{available,enabled}/cofifi.com   (then: nginx -t && systemctl reload nginx)"
-echo "  /etc/letsencrypt/live/cofifi.com                  (certbot delete --cert-name cofifi.com)"
+echo "  the COFiFi block in PMS03's Caddyfile — remove it in the PMS03 REPO,"
+echo "    commit, pull on the box, then caddy validate && caddy reload"
+echo "  Caddy holds the cofifi.com certificate in the deploy_caddy_data volume."
+echo "    It expires by itself; there is no reason to go digging in another"
+echo "    project's volume for it."
 echo "  the A records, if you are giving the domain up"

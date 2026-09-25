@@ -1,0 +1,43 @@
+# ── COFiFi ───────────────────────────────────────────────────────────────
+# Afro Coffee & Treats Co. A separate project sharing this box and this Caddy.
+# Nothing below belongs to Locare; it is here because one Caddy fronts the VPS.
+#
+# THIS BLOCK BELONGS IN THE PMS03 REPO, like everything else in this file.
+# Add it there, commit, and `git pull` on the box. Do not paste it in on the
+# server — that is how the BuddhaPets blocks went missing from the repo.
+#
+# DNS: A records  @ / www .cofifi.com  ->  169.58.46.223
+#      Leave the MX records alone; cofifi.com's mail is Google Workspace.
+#
+# `cofifi-wp` is a network alias set in the cofifi compose project; it resolves
+# over deploy_default, the same network this Caddy is on — same arrangement as
+# buddhapets-wp above.
+#
+# Expect 503 from this site. The shop is behind a maintenance gate and answers
+# 503 with a holding page to the public until it is deliberately opened. That
+# is the design, not a broken upstream.
+
+cofifi.com, www.cofifi.com {
+	encode zstd gzip
+	reverse_proxy cofifi-wp:80
+
+	# wp-admin, login, cron and the REST API must never be cached upstream.
+	@dynamic path /wp-admin/* /wp-json/* /wp-login.php /wp-cron.php
+	header @dynamic Cache-Control "no-store"
+
+	# Neither may anything that is per-shopper. A cached cart served to the
+	# wrong person is the classic WooCommerce-behind-a-proxy failure.
+	@shopper path /cart* /checkout* /my-account*
+	header @shopper Cache-Control "no-store"
+
+	# The theme repo is mounted into the web root and carries deploy/ and
+	# setup/ — which hold .env and the database password. Nothing in them may
+	# ever be served.
+	@private path /wp-content/themes/cofifi/deploy/* /wp-content/themes/cofifi/setup/*
+	respond @private 404
+
+	# xmlrpc is the single most brute-forced endpoint in WordPress and this
+	# install has no use for it.
+	@xmlrpc path /xmlrpc.php
+	respond @xmlrpc 403
+}

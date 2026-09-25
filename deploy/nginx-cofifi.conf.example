@@ -1,3 +1,9 @@
+# NOT FOR THE CURRENT VPS. That box is fronted by Caddy (deploy-caddy-1),
+# which never reads /etc/nginx and issues its own certificates — use
+# caddy-cofifi.snippet instead, and do not run certbot there.
+#
+# Kept only for a future box that is fronted by host nginx.
+
 # Host nginx vhost. Put this in /etc/nginx/sites-available/cofifi.com, symlink
 # it into sites-enabled, then `certbot --nginx -d cofifi.com -d www.cofifi.com`
 # — certbot rewrites this file to add the TLS block and the redirect.
