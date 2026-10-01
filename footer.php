@@ -70,10 +70,6 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</div>
 
-		<?php if ( is_active_sidebar( 'footer-note' ) ) : ?>
-			<div class="footer-note"><?php dynamic_sidebar( 'footer-note' ); ?></div>
-		<?php endif; ?>
-
 		<div class="footer-legal">
 			<p class="legal"><?php echo esc_html( cofifi_compliance_line() ); ?></p>
 			<span class="legal" style="white-space:nowrap">

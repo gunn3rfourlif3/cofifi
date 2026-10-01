@@ -55,21 +55,20 @@ function cofifi_content_width() {
 }
 add_action( 'after_setup_theme', 'cofifi_content_width', 0 );
 
-/**
- * Sidebar for the footer newsletter area (optional).
+/*
+ * No widget areas, deliberately.
+ *
+ * There used to be a "Footer note" sidebar here. Nothing in the design used
+ * it and it had no CSS, but WordPress auto-populates the first registered
+ * sidebar on a fresh install — so every new site came up with Archives,
+ * Categories and Recent Posts dumped unstyled into the footer, breaking the
+ * layout.
+ *
+ * The footer is a designed, fixed composition: brand block, four menus, legal
+ * line. If something new needs to go in it, add it to footer.php where it can
+ * be laid out properly, rather than leaving an open slot for WordPress to
+ * fill with defaults.
  */
-function cofifi_widgets_init() {
-	register_sidebar( array(
-		'name'          => __( 'Footer note', 'cofifi' ),
-		'id'            => 'footer-note',
-		'description'   => __( 'Small area under the footer columns.', 'cofifi' ),
-		'before_widget' => '<div class="footer-widget">',
-		'after_widget'  => '</div>',
-		'before_title'  => '<h5>',
-		'after_title'   => '</h5>',
-	) );
-}
-add_action( 'widgets_init', 'cofifi_widgets_init' );
 
 /**
  * Theme options that hold the bracketed placeholders until real values exist.
