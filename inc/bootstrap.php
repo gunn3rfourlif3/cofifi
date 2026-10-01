@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'COFIFI_BOOTSTRAP', 6 );
+define( 'COFIFI_BOOTSTRAP', 7 );
 
 /**
  * Run any bootstrap steps this install has not reached yet.
@@ -29,6 +29,7 @@ function cofifi_bootstrap() {
 	update_option( 'cofifi_bootstrap', COFIFI_BOOTSTRAP, true );
 
 	cofifi_bootstrap_brand();
+	cofifi_bootstrap_site_icon();
 	cofifi_bootstrap_gallery_page();
 	cofifi_bootstrap_catalogue();
 	cofifi_bootstrap_retire_thc_claim();
@@ -119,6 +120,56 @@ function cofifi_bootstrap_brand() {
 	if ( ! get_theme_mod( 'cofifi_legal_name' ) ) {
 		set_theme_mod( 'cofifi_legal_name', 'CoFiFi Roastery' );
 	}
+}
+
+/**
+ * Set the site icon, if the shop has not chosen one.
+ *
+ * The icon is assets/img/site-icon.png — the afro-profile mark on its own,
+ * lifted out of the full logo. The whole logo does not survive the trip down
+ * to 16px: the oval, the wordmark and "EST. 2022" collapse into a grey smear.
+ *
+ * WordPress derives the 270, 192, 180 and 32px variants from this one file, so
+ * it is the only source anyone has to replace. Setting it here rather than
+ * shipping <link rel="icon"> tags means the shop can swap it in Settings →
+ * General like any other site, and the Customizer preview stays honest.
+ *
+ * Never overwrites: if site_icon is already set, this does nothing, even on a
+ * later bootstrap bump.
+ */
+function cofifi_bootstrap_site_icon() {
+	if ( (int) get_option( 'site_icon', 0 ) > 0 ) {
+		return;
+	}
+
+	$attachment_id = cofifi_sideload_theme_image( 'site-icon.png' );
+
+	if ( ! $attachment_id ) {
+		return;
+	}
+
+	// Without this the attachment has only the ordinary theme sizes, and
+	// get_site_icon_url() falls back to the full 512px file for every slot —
+	// a 24KB download to paint a 16px tab icon. WP_Site_Icon::additional_sizes
+	// is what the Customizer's crop step hooks on; borrow it and rebuild the
+	// metadata once, here.
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/class-wp-site-icon.php';
+
+	$site_icon = new WP_Site_Icon();
+	$sizes     = array( $site_icon, 'additional_sizes' );
+	$file      = get_attached_file( $attachment_id );
+
+	if ( $file && file_exists( $file ) ) {
+		add_filter( 'intermediate_image_sizes_advanced', $sizes );
+		wp_update_attachment_metadata(
+			$attachment_id,
+			wp_generate_attachment_metadata( $attachment_id, $file )
+		);
+		remove_filter( 'intermediate_image_sizes_advanced', $sizes );
+	}
+
+	update_option( 'site_icon', $attachment_id );
 }
 
 /**

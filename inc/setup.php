@@ -161,3 +161,35 @@ function cofifi_customize_register( $wp_customize ) {
 	}
 }
 add_action( 'customize_register', 'cofifi_customize_register' );
+
+/**
+ * Fall back to the theme's icon files when no site icon is set.
+ *
+ * inc/bootstrap.php seeds a real site icon, and once it is set WordPress emits
+ * everything below for us — so this prints nothing on a normal install. It
+ * covers the gaps: a fresh database before bootstrap has run, or a shop that
+ * clears the icon in Settings → General and leaves it empty.
+ *
+ * Deliberately not an unconditional set of <link> tags. Two competing icon
+ * declarations in one <head> is how you end up with the old mark cached in a
+ * tab for a week.
+ */
+function cofifi_site_icon_fallback() {
+	if ( has_site_icon() ) {
+		return;
+	}
+
+	printf(
+		'<link rel="icon" href="%s" sizes="any">' . "\n",
+		esc_url( cofifi_img( 'favicon.ico' ) )
+	);
+	printf(
+		'<link rel="icon" href="%s" type="image/png" sizes="512x512">' . "\n",
+		esc_url( cofifi_img( 'site-icon.png' ) )
+	);
+	printf(
+		'<link rel="apple-touch-icon" href="%s">' . "\n",
+		esc_url( cofifi_img( 'site-icon.png' ) )
+	);
+}
+add_action( 'wp_head', 'cofifi_site_icon_fallback', 100 );

@@ -31,6 +31,7 @@ $action = apply_filters( 'cofifi_newsletter_action', '' );
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap">
 	<link rel="stylesheet" href="<?php echo esc_url( COFIFI_URI . '/assets/css/theme.css?v=' . ( file_exists( $css ) ? filemtime( $css ) : COFIFI_VERSION ) ); ?>">
 	<?php wp_site_icon(); ?>
+	<?php cofifi_site_icon_fallback(); ?>
 </head>
 
 <body class="maint-body">
