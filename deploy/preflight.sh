@@ -52,15 +52,23 @@ if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
     esac
     # An alias clash is silent and vicious: two containers answering to one
     # name means the proxy reaches whichever DNS feels like answering.
-    if docker ps --format '{{.Names}}' | grep -q "^cofifi-wordpress"; then
-      warn "a cofifi-wordpress container is already running"
-    fi
+    #
+    # Our OWN containers from an earlier run hold this alias legitimately —
+    # first-run.sh is meant to be resumable, so finding ourselves here is
+    # normal, not a clash. Skip anything belonging to our compose project.
+    TAKEN=""
     for c in $(docker network inspect "$PROXY_NET" --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null); do
+      OWNER="$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || true)"
+      [ "$OWNER" = "$NAME" ] && continue
       if docker inspect "$c" --format "{{range .NetworkSettings.Networks}}{{range .Aliases}}{{.}} {{end}}{{end}}" 2>/dev/null | grep -qw "$ALIAS"; then
-        bad "the alias '$ALIAS' is already taken on $PROXY_NET by $c"
+        TAKEN="$TAKEN $c"
       fi
     done
-    [ "$FAIL" -eq 0 ] && ok "alias '$ALIAS' is free"
+    if [ -n "$TAKEN" ]; then
+      bad "the alias '$ALIAS' on $PROXY_NET is already taken by another project:$TAKEN"
+    else
+      ok "alias '$ALIAS' is free (or held only by our own containers)"
+    fi
   else
     bad "network $PROXY_NET does not exist. Find the proxy's network:
           docker inspect <proxy-container> --format '{{range \$k,\$v := .NetworkSettings.Networks}}{{\$k}} {{end}}'
