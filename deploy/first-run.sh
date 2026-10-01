@@ -60,13 +60,19 @@ else
   fi
 fi
 
-# The image upgrades core FILES in the volume when its WordPress version is
-# newer than what is there. The database schema does not follow by itself, and
-# a half-upgraded install fails in confusing ways. This is a no-op when there
-# is nothing to do.
-echo "==> database schema"
-wp core update-db 2>/dev/null || true
-wp core version 2>/dev/null | sed 's/^/    WordPress /' || true
+# The official image seeds WordPress into the volume ONLY when the volume is
+# empty. It deliberately does not upgrade an existing install — that is
+# WordPress's job, not the image's. So after the first run the image tag
+# governs PHP and Apache, and nothing else: bumping it to a newer WordPress
+# leaves the core files in the volume exactly where they were.
+#
+# That is how this install sat on 6.9.4 under a wordpress:7 image and
+# WooCommerce kept refusing to install. Upgrade the files explicitly, then the
+# schema. Both are no-ops when there is nothing to do.
+echo "==> WordPress core"
+wp core update || true
+wp core update-db || true
+wp core version 2>/dev/null | sed 's/^/    now on WordPress /' || true
 
 echo "==> WooCommerce"
 wp plugin is-installed woocommerce 2>/dev/null || wp plugin install woocommerce

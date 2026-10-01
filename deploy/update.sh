@@ -11,6 +11,10 @@ wp() { docker compose run --rm -T cli wp --path=/var/www/html "$@"; }
 echo "==> pulling the theme"
 git -C .. pull --ff-only
 
+# Schema only. Deliberately NOT `wp core update` — this is the routine deploy
+# script, and silently pulling a new major WordPress into a live shop because
+# wordpress.org released one is not a thing a theme deploy should do. Upgrade
+# core on purpose, with first-run.sh or by hand.
 echo "==> database schema (no-op unless core was upgraded)"
 wp core update-db 2>/dev/null || true
 

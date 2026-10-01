@@ -58,10 +58,15 @@ services:
     # Pin the MAJOR line, not 'latest' — an unattended major upgrade of a live
     # shop is not something to find out about from a customer.
     #
-    # But a pin rots: WooCommerce raised its minimum to WordPress 7.0 and this
-    # was still on 6, so `wp plugin install woocommerce` refused with "does not
-    # work with your version of WordPress". If that happens again, the plugin's
-    # minimum has outrun this pin — bump the major here, don't downgrade Woo.
+    # A pin rots: WooCommerce raised its minimum to WordPress 7.0 while this
+    # was on 6, and `wp plugin install woocommerce` refused with "does not work
+    # with your version of WordPress". If that happens again, the plugin's
+    # minimum has outrun the pin — bump the major here, don't downgrade Woo.
+    #
+    # AND NOTE: changing this tag alone does NOT upgrade an existing install.
+    # The image seeds WordPress only into an empty volume; after that the tag
+    # governs PHP and Apache and nothing else. The core files are upgraded by
+    # `wp core update`, which first-run.sh does.
     image: wordpress:7-php8.4-apache
     restart: unless-stopped
     depends_on:
