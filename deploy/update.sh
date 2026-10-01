@@ -11,6 +11,9 @@ wp() { docker compose run --rm -T cli wp --path=/var/www/html "$@"; }
 echo "==> pulling the theme"
 git -C .. pull --ff-only
 
+echo "==> database schema (no-op unless core was upgraded)"
+wp core update-db 2>/dev/null || true
+
 echo "==> provisioning (idempotent — creates what is missing, changes nothing else)"
 wp eval-file wp-content/themes/cofifi/setup/provision.php
 

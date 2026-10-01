@@ -60,6 +60,14 @@ else
   fi
 fi
 
+# The image upgrades core FILES in the volume when its WordPress version is
+# newer than what is there. The database schema does not follow by itself, and
+# a half-upgraded install fails in confusing ways. This is a no-op when there
+# is nothing to do.
+echo "==> database schema"
+wp core update-db 2>/dev/null || true
+wp core version 2>/dev/null | sed 's/^/    WordPress /' || true
+
 echo "==> WooCommerce"
 wp plugin is-installed woocommerce 2>/dev/null || wp plugin install woocommerce
 wp plugin is-active woocommerce 2>/dev/null || wp plugin activate woocommerce
